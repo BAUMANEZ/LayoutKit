@@ -12,8 +12,7 @@ import OrderedCollections
 extension Composition {
     public final class Behaviour<Section: Hashable, Item: Hashable> {
         internal weak var manager: Manager<Section, Item>?
-        internal weak var layout : Layout<Section, Item>?
-        internal var provider    : Provider?
+        internal var provider: Provider?
         
         //MARK: - Methods
         /// - multiselection: default is false

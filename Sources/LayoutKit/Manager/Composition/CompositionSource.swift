@@ -17,15 +17,11 @@ extension Composition {
         public fileprivate(set) var wrappers: [Section: String] = [:]
                 
         public lazy var snapshot = Snapshot(source: self)
+        internal weak var manager: Manager<Section, Item>?
         internal var provider: Provider?
         
-        internal weak var behaviour: Behaviour<Section, Item>?
-        internal weak var manager  : Manager<Section, Item>?
-        internal weak var layout   : Layout<Section, Item>?
-        
-        internal init(manager: Manager<Section, Item>? = nil, layout: Layout<Section, Item>? = nil, behaviour: Behaviour<Section, Item>? = nil) {
+        internal init(manager: Manager<Section, Item>? = nil) {
             self.manager = manager
-            self.layout = layout
         }
         
         //MARK: Data Source
@@ -236,7 +232,7 @@ extension Composition.Source {
         }
 
         private func set(sections: OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?, completion: (IndexSet, IndexSet) -> Void) {
-            source?.layout?.removeAll()
+            source?.manager?.layout.removeAll()
             source?.pages.removeAll()
             source?.offsets.removeAll()
             source?.selected.removeAll()
@@ -271,7 +267,7 @@ extension Composition.Source {
         
         private func delete(sections: OrderedSet<Section>, completion: (IndexSet) -> Void) {
             sections.forEach {
-                source?.layout?.remove(sections: sections)
+                source?.manager?.layout.remove(sections: sections)
                 source?.pages.removeValue(forKey: $0)
                 source?.offsets.removeValue(forKey: $0)
                 items[$0]?.forEach{ item in source?.selected.remove(item)}
@@ -294,7 +290,7 @@ extension Composition.Source {
         }
         
         private func reload(sections: OrderedSet<Section>, completion: (IndexSet) -> Void) {
-            source?.layout?.remove(sections: sections)
+            source?.manager?.layout.remove(sections: sections)
             let _sections = Set(sections.compactMap{ self.sections.firstIndex(of: $0) })
             completion(IndexSet(_sections))
         }
@@ -302,7 +298,7 @@ extension Composition.Source {
         private func set(items: OrderedSet<Item>, to section: Section, completion: (Set<IndexPath>, Set<IndexPath>) -> Void) {
             guard let _section = self.sections.firstIndex(of: section),
                   let source = source,
-                  let layout = source.layout,
+                  let layout = source.manager?.layout,
                   let style = layout.style(for: section)
             else { completion([], []); return }
             let update = self.items[section] ?? []
@@ -331,7 +327,7 @@ extension Composition.Source {
             let _items = update.count
             update.append(contentsOf: items)
             self.items[section] = update
-            switch source?.layout?.style(for: section) {
+            switch source?.manager?.layout.style(for: section) {
             case .vertical:
                 completion(Set(items.indices.map{ IndexPath(item: _items+$0, section: _section) }))
             default:
@@ -345,7 +341,7 @@ extension Composition.Source {
         }
         
         private func refresh() {
-            source?.layout?.removeAll()
+            source?.manager?.layout.removeAll()
         }
         
         public enum Update {

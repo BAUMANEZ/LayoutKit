@@ -14,7 +14,6 @@ extension Composition {
         private typealias Cache = Configuration.Cache<Section, Item>
         
         internal weak var manager: Manager<Section, Item>?
-        internal weak var source: Source<Section, Item>?
         internal var provider: Provider?
         
         private let cache = Cache()
@@ -23,9 +22,8 @@ extension Composition {
             return manager?.view.frame.size ?? .zero
         }
         
-        internal init(manager: Manager<Section, Item>? = nil, source: Source<Section, Item>? = nil) {
+        internal init(manager: Manager<Section, Item>? = nil) {
             self.manager = manager
-            self.source = source
         }
         
         public func header(for section: Section) -> CGFloat {
@@ -49,7 +47,7 @@ extension Composition {
             }
         }
         public func height(for section: Section) -> CGFloat {
-            guard let source = source, let style = style(for: section) else { return .zero }
+            guard let source = manager?.source, let style = style(for: section) else { return .zero }
             let items = source.items(for: section)
             let key = Cache.Section.Fields.Key(width: frame.width, count: items.count)
             guard let cached = cache.height(for: key, in: section) else {
@@ -156,7 +154,7 @@ extension Composition {
         }
         
         public func automatic(for section: Section) -> Configuration.Automatic? {
-            guard let source = source else { return nil }
+            guard let source = manager?.source else { return nil }
             let key = Cache.Section.Fields.Key(width: frame.width, count: source.items(for: section).count)
             return cache.automatic(for: key, in: section)
         }

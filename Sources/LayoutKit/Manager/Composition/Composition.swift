@@ -177,15 +177,11 @@ extension Composition {
             self.view = UITableView(frame: content.bounds, style: .grouped)
             self.layout = Layout()
             self.behaviour = Behaviour()
-            self.source = Source(layout: layout, behaviour: behaviour)
-            self.layout.source = self.source
+            self.source = Source()
             super.init()
             layout.manager = self
             source.manager = self
             behaviour.manager = self
-            source.provider = sourceProvider
-            layout.provider = layoutProvider
-            behaviour.provider = behaviourProvider
             setup(in: content)
         }
         
@@ -203,8 +199,8 @@ extension Composition {
             view.backgroundColor = nil
             view.sectionHeaderHeight = 0
             view.sectionFooterHeight = 0
-            view.tableHeaderView = UIView(frame: .zero)
-            view.tableFooterView = UIView(frame: .zero)
+            view.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: Double.leastNormalMagnitude))
+            view.tableFooterView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: Double.leastNonzeroMagnitude))
             view.insetsContentViewsToSafeArea = false
             view.insetsLayoutMarginsFromSafeArea = false
             view.contentInsetAdjustmentBehavior = .never
@@ -311,7 +307,7 @@ extension Composition {
                     case .right : return .right
                     }
                 }()
-                let grid = ((self.view.cellForRow(at: IndexPath(item: 0, section: indexPath.section)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view
+                let grid = ((view.cellForRow(at: IndexPath(item: 0, section: indexPath.section)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view
                 let _indexPath = IndexPath(item: indexPath.item, section: 0)
                 grid?.scrollToItem(at: _indexPath, at: scrollPosition, animated: animated)
             case .custom:
@@ -669,12 +665,20 @@ extension Composition {
         open func scrolled() {}
         
         //MARK: - Managing DataSource
-        /// - layoutProvider: define how to compose your sections and layout items
-        /// - sourceProvider: define cells and boundary views
-        /// - behaviourProvider: define logic of particular section
-        open var layoutProvider   : Layout.Provider?    { return nil }
-        open var sourceProvider   : Source.Provider?    { return nil }
-        open var behaviourProvider: Behaviour.Provider? { return nil }
+        /// - layout provider: define how to compose your sections and layout items
+        /// - source provider: define cells and boundary views
+        /// - behaviour provider: define logic of particular section
+        public func set(layout provider: Layout.Provider?, animated: Bool) {
+            layout.provider = provider
+            source.snapshot.batch(updates: [.refresh], animation: animated ? .fade : nil)
+        }
+        public func set(source provider: Source.Provider?, animated: Bool) {
+            source.provider = provider
+            source.snapshot.batch(updates: [.reloadSections(source.sections)], animation: animated ? .fade : nil)
+        }
+        public func set(behaviour provider: Behaviour.Provider?) {
+            behaviour.provider = provider
+        }
 
         //MARK: Override these properties to register
         /// - cells: table view cells and collection view cells
