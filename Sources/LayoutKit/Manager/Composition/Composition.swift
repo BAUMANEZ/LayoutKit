@@ -612,7 +612,13 @@ extension Composition {
         //MARK: - List Delegate
         open func will(display cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) {}
         open func end(display cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) {}
-        open func selectable(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) -> Bool { return focusable(cell: cell, with: item, in: section, for: indexPath) }
+        open func selectable(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) -> Bool {
+            #if os(tvOS)
+            return focusable(cell: cell, with: item, in: section, for: indexPath)
+            #else
+            return true
+            #endif
+        }
         open func selected(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) {}
         open func deselectable(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) -> Bool { return true }
         open func deselected(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) { cell.set(selected: false, animated: true) }
@@ -640,10 +646,18 @@ extension Composition {
         }
         
         open func selectable(header: Boundary, in section: Section, at index: Int) -> Bool {
+            #if os(tvOS)
             return focusable(header: header, in: section, at: index)
+            #else
+            return false
+            #endif
         }
         open func selectable(footer: Boundary, in section: Section, at index: Int) -> Bool {
+            #if os(tvOS)
             return focusable(footer: footer, in: section, at: index)
+            #else
+            return false
+            #endif
         }
         open func selected(header: Boundary, in section: Section, at index: Int) {}
         open func selected(footer: Boundary, in section: Section, at index: Int) {}
@@ -709,7 +723,7 @@ extension Composition {
         }
         
         open func update(for traitCollection: UITraitCollection) {}
-    }
+    }    
 }
 
 internal extension Composition.Manager {

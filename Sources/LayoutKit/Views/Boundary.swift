@@ -133,6 +133,28 @@ extension Boundary {
 //            addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(tapped)))
         }
         
+        override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+            super.touchesBegan(touches, with: event)
+            guard let delegate = delegate, let section = section, let wrapped = wrapped else { return }
+            guard isHeader ? delegate.highlightable(header: wrapped, in: section) : delegate.highlightable(footer: wrapped, in: section) else { return }
+            isHeader ? delegate.highlighted(header: wrapped, in: section) : delegate.highlighted(footer: wrapped, in: section)
+            wrapped.set(highlighted: true, animated: true)
+        }
+        override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+            super.touchesEnded(touches, with: event)
+            guard let delegate = delegate,
+                  let section = section,
+                  let wrapped = wrapped
+            else { return }
+            if isHeader ? delegate.selectable(header: wrapped, in: section) : delegate.selectable(footer: wrapped, in: section) {
+                isHeader ? delegate.selected(header: wrapped, in: section) : delegate.selected(footer: wrapped, in: section)
+                wrapped.selected()
+            }
+            guard isHeader ? delegate.highlightable(header: wrapped, in: section) : delegate.highlightable(footer: wrapped, in: section) else { return }
+            isHeader ? delegate.unhighlighted(header: wrapped, in: section) : delegate.unhighlighted(footer: wrapped, in: section)
+            wrapped.set(highlighted: false, animated: true)
+        }
+        
         internal override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
             super.pressesBegan(presses, with: event)
             guard let delegate = delegate, let section = section, let wrapped = wrapped else { return }
@@ -146,7 +168,6 @@ extension Boundary {
                 break
             }
         }
-        
         internal override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
             super.pressesEnded(presses, with: event)
             guard let delegate = delegate,
