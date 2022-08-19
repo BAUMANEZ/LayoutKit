@@ -24,7 +24,7 @@ internal protocol BoundaryDelegate: AnyObject {
     func focused(footer: Boundary, in section: Int)
 }
 
-open class Boundary: UIView, Dequeueable {
+open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
     //MARK: Main properties
     /// - identifier: override this property for your custom boundary view. This property is used when dequeueing view
     /// - scheme: use this property together with paint(scheme:) function to apply colors to your view
@@ -72,7 +72,7 @@ open class Boundary: UIView, Dequeueable {
     }
     
     open func selected() {}
-    open func set(focused: Bool, coordinator: UIFocusAnimationCoordinator) {}
+    open func set(focused: Bool, context: UIFocusUpdateContext, coordinator: UIFocusAnimationCoordinator) {}
     open func set(highlighted: Bool, animated: Bool = true) {
         UIView.animate(withDuration: animated ? 0.5 : 0, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0.25, options: [.allowUserInteraction, .curveLinear]) {
             self.content.transform = highlighted ? CGAffineTransform(scaleX: 0.985, y: 0.985) : .identity
@@ -125,36 +125,14 @@ extension Boundary {
             guard let delegate = delegate, let section = section, let wrapped = wrapped else { return }
             isHeader ? delegate.focused(header: wrapped, in: section) : delegate.focused(footer: wrapped, in: section)
             wrapped.focusing = isFocused
-            wrapped.set(focused: isFocused, coordinator: coordinator)
+            wrapped.set(focused: isFocused, context: context, coordinator: coordinator)
         }
         
         private func touches() {
             isUserInteractionEnabled = true
-//            addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(tapped)))
         }
         
-        override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-            super.touchesBegan(touches, with: event)
-            guard let delegate = delegate, let section = section, let wrapped = wrapped else { return }
-            guard isHeader ? delegate.highlightable(header: wrapped, in: section) : delegate.highlightable(footer: wrapped, in: section) else { return }
-            isHeader ? delegate.highlighted(header: wrapped, in: section) : delegate.highlighted(footer: wrapped, in: section)
-            wrapped.set(highlighted: true, animated: true)
-        }
-        override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-            super.touchesEnded(touches, with: event)
-            guard let delegate = delegate,
-                  let section = section,
-                  let wrapped = wrapped
-            else { return }
-            if isHeader ? delegate.selectable(header: wrapped, in: section) : delegate.selectable(footer: wrapped, in: section) {
-                isHeader ? delegate.selected(header: wrapped, in: section) : delegate.selected(footer: wrapped, in: section)
-                wrapped.selected()
-            }
-            guard isHeader ? delegate.highlightable(header: wrapped, in: section) : delegate.highlightable(footer: wrapped, in: section) else { return }
-            isHeader ? delegate.unhighlighted(header: wrapped, in: section) : delegate.unhighlighted(footer: wrapped, in: section)
-            wrapped.set(highlighted: false, animated: true)
-        }
-        
+        #if os(tvOS)
         internal override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
             super.pressesBegan(presses, with: event)
             guard let delegate = delegate, let section = section, let wrapped = wrapped else { return }
@@ -188,14 +166,29 @@ extension Boundary {
                 break
             }
         }
-        
-        @objc
-        private func tapped() {
-            guard let section = section, let wrapped = wrapped, let delegate = delegate else { return }
-            guard isHeader ? delegate.selectable(header: wrapped, in: section) : delegate.selectable(footer: wrapped, in: section) else { return }
-            isHeader ? delegate.selected(header: wrapped, in: section) : delegate.selected(footer: wrapped, in: section)
-            wrapped.selected()
+        #else
+        override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+            super.touchesBegan(touches, with: event)
+            guard let delegate = delegate, let section = section, let wrapped = wrapped else { return }
+            guard isHeader ? delegate.highlightable(header: wrapped, in: section) : delegate.highlightable(footer: wrapped, in: section) else { return }
+            isHeader ? delegate.highlighted(header: wrapped, in: section) : delegate.highlighted(footer: wrapped, in: section)
+            wrapped.set(highlighted: true, animated: true)
         }
+        override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+            super.touchesEnded(touches, with: event)
+            guard let delegate = delegate,
+                  let section = section,
+                  let wrapped = wrapped
+            else { return }
+            if isHeader ? delegate.selectable(header: wrapped, in: section) : delegate.selectable(footer: wrapped, in: section) {
+                isHeader ? delegate.selected(header: wrapped, in: section) : delegate.selected(footer: wrapped, in: section)
+                wrapped.selected()
+            }
+            guard isHeader ? delegate.highlightable(header: wrapped, in: section) : delegate.highlightable(footer: wrapped, in: section) else { return }
+            isHeader ? delegate.unhighlighted(header: wrapped, in: section) : delegate.unhighlighted(footer: wrapped, in: section)
+            wrapped.set(highlighted: false, animated: true)
+        }
+        #endif
     }
 }
 

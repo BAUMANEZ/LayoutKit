@@ -23,7 +23,7 @@ public protocol Editable: UIView {
     func set(editing: Bool, animated: Bool)
 }
 public protocol Focusable: UIView {
-    func set(focused: Bool, animated: Bool)
+    func set(focused: Bool, context: UIFocusUpdateContext, coordinator: UIFocusAnimationCoordinator)
 }
 
 public protocol Compositional: Dequeueable, Highlightable, Selectable, Focusable {}

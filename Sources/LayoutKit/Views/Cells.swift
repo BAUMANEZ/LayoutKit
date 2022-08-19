@@ -65,7 +65,7 @@ open class Cell: UIView, Compositional {
             self.content.transform = highlighted ? CGAffineTransform(scaleX: 0.95, y: 0.95) : .identity
         }, completion: nil)
     }
-    open func set(focused: Bool, animated: Bool = true) {}
+    open func set(focused: Bool, context: UIFocusUpdateContext, coordinator: UIFocusAnimationCoordinator) {}
 }
 
 extension Cell {
@@ -148,7 +148,7 @@ extension Cell {
         
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
             wrapped?.focusing = isFocused
-            wrapped?.set(focused: isFocused, animated: true)
+            wrapped?.set(focused: isFocused, context: context, coordinator: coordinator)
         }
     }
 }
@@ -189,7 +189,7 @@ extension Cell {
         
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
             wrapped?.focusing = isFocused
-            wrapped?.set(focused: isFocused, animated: true)
+            wrapped?.set(focused: isFocused, context: context, coordinator: coordinator)
         }
     }
 }

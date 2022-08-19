@@ -230,6 +230,9 @@ extension Composition.Source {
                 }
             }
         }
+        public func reload() {
+            source?.manager?.view.reloadData()
+        }
 
         private func set(sections: OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?, completion: (IndexSet, IndexSet) -> Void) {
             source?.manager?.layout.removeAll()
