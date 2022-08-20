@@ -45,6 +45,8 @@ open class Cell: UIView, Compositional {
     //MARK: Entry point for cell layout cofiguration
     open func setup() {}
     private func setupContent() {
+        backgroundColor = .clear
+        content.backgroundColor = .clear
         clipsToBounds = false
         content.clipsToBounds = false
         backgroundColor = .clear
