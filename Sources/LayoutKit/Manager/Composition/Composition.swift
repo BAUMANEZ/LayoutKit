@@ -347,11 +347,9 @@ extension Composition {
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     wrapped.configure(in: indexPath.section, parent: self)
-                    wrapped.set(offset: self.source.offset(in: section))
                 }
                 #else
                 wrapped.configure(in: indexPath.section, parent: self)
-                wrapped.set(offset: source.offset(in: section))
                 #endif
                 guard let wrapper = tableView.dequeue(wrapper: wrapped, for: indexPath, with: template) else { return UITableViewCell() }
                 wrapper.wrap(cell: wrapped)
@@ -427,7 +425,7 @@ extension Composition {
                   let item = source.item(for: indexPath),
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
-            (cell as? Cell.Wrapper<Section, Item>)?.set(offset: source.offset(in: section))
+            (cell as? Cell.Wrapper<Section, Item>)?.grid?.view.setContentOffset(source.offset(in: section) ?? .zero, animated: false)
             will(display: cell, with: item, in: section, for: indexPath)
         }
         public func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
@@ -534,9 +532,7 @@ extension Composition {
             should(update: FocusUpdateContext(tabled: context))
         }
         public func tableView(_ tableView: UITableView, didUpdateFocusIn context: UITableViewFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
-            #if os(tvOS)
             lastFocusedIndexPath = context.previouslyFocusedIndexPath
-            #endif
             let focus = FocusUpdateContext(tabled: context)
             update(focus: focus, using: coordinator)
             guard let indexPath = context.nextFocusedIndexPath,

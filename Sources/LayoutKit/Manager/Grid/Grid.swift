@@ -63,9 +63,16 @@ extension Grid {
                 view.showsHorizontalScrollIndicator = true
                 view.isScrollEnabled = true
                 (view.collectionViewLayout as? UICollectionViewFlowLayout)?.scrollDirection = .horizontal
-                if rows == .infinite {
-                    view.reloadData()
-                    view.scrollToItem(at: IndexPath(item: parent.source.items(for: section).count*multiplier/2, section: 0), at: .centeredHorizontally, animated: false)
+                switch rows {
+                case .infinite :
+                    guard parent.source.offset(in: section) == nil else { break }
+//                    DispatchQueue.main.async { [weak self] in
+//                        guard let self = self else { return }
+//                        let selected = parent.source.items(for: section).firstIndex(where: { parent.source.selected(item: $0) }) ?? 0
+//                        self.view.scrollToItem(at: IndexPath(item: (parent.source.items(for: section).count+selected)*self.multiplier/2, section: 0), at: .centeredHorizontally, animated: false)
+//                    }
+                default:
+                    break
                 }
             }
             
@@ -80,7 +87,7 @@ extension Grid {
             view.topAnchor.constraint(equalTo: content.topAnchor).isActive = true
             view.leftAnchor.constraint(equalTo: content.leftAnchor).isActive = true
             view.rightAnchor.constraint(equalTo: content.rightAnchor).isActive = true
-            view.bottomAnchor.constraint(equalTo: content.bottomAnchor).isActive = true
+            view.bottomAnchor.constraint(equalTo: content.bottomAnchor).isActive = true            
         }
         
         internal func stride(for item: Int) -> StrideTo<Int> {
@@ -99,7 +106,12 @@ extension Grid {
             else { return .zero }
             switch style {
             case .horizontal(_, _, let rows, _):
-                return (rows == .infinite ? multiplier : 1)*parent.source.items(for: section).count
+                switch rows {
+                case .finite:
+                    return parent.source.items(for: section).count
+                case .infinite:
+                    return multiplier*parent.source.items(for: section).count
+                }
             default:
                 return parent.source.items(for: section).count
             }
@@ -238,10 +250,26 @@ extension Grid {
             parent.update(focus: focus, using: coordinator)
             guard let indexPath = context.nextFocusedIndexPath,
                   let section = parent.source.section(for: _section),
+                  let style = parent.layout.style(for: section),
                   let item = parent.source.item(for: IndexPath(item: indexPath.item%mod
                                                                , section: _section)),
                   let cell = (view.cellForItem(at: indexPath) as? Cell.Grided)?.wrapped
             else { return }
+            switch style {
+            case .vertical, .grid, .custom:
+                view.isScrollEnabled = true
+            case .horizontal(_, _, let rows, _):
+                switch rows {
+                case .finite(_, let scrolling), .infinite(let scrolling):
+                    switch scrolling {
+                    case .automatic:
+                        view.isScrollEnabled = true
+                    case .centerted:
+                        view.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+                        view.isScrollEnabled = false
+                    }
+                }
+            }
             parent.focused(cell: cell, with: item, in: section, for: indexPath, with: FocusUpdateContext(grided: context, actual: _section), using: coordinator)
         }
         internal func scrollViewDidScroll(_ scrollView: UIScrollView) {

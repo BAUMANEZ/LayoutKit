@@ -263,16 +263,21 @@ extension Composition.Layout {
         }
         
         public enum Rows: Equatable {
-            case finite(rows: Int)
-            case infinite
+            case finite(rows: Int, scrolling: Scrolling)
+            case infinite(scrolling: Scrolling)
             
             public var count: Int {
                 switch self {
-                case .finite(let rows):
+                case .finite(let rows, _):
                     return rows
                 case .infinite:
                     return 1
                 }
+            }
+            
+            public enum Scrolling {
+                case centerted
+                case automatic
             }
         }
     }

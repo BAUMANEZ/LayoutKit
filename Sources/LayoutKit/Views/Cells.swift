@@ -94,10 +94,6 @@ extension Cell {
         internal func configure(in section: Int, parent: Parent) {
             self.grid = Child(parent: parent, section: section, in: content)
         }
-        
-        internal func set(offset: CGPoint?) {
-            grid?.view.contentOffset = offset ?? CGPoint(x: 15000, y: 0)
-        }
     }
 }
 
