@@ -541,7 +541,9 @@ extension Composition {
             should(update: FocusUpdateContext(tabled: context))
         }
         public func tableView(_ tableView: UITableView, didUpdateFocusIn context: UITableViewFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
+            #if os(tvOS)
             lastFocusedIndexPath = context.previouslyFocusedIndexPath
+            #endif
             let focus = FocusUpdateContext(tabled: context)
             update(focus: focus, using: coordinator)
             guard let indexPath = context.nextFocusedIndexPath,
