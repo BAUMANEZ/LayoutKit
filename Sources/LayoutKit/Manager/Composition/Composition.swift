@@ -332,13 +332,21 @@ extension Composition {
         public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
             guard let section = source.section(for: indexPath.section) else { return UITableViewCell() }
             switch layout.style(for: section) {
-            case .vertical, .custom:
+            case .vertical(_, let separator):
                 guard let cell = source.cell(for: indexPath) as? Cell,
                       let listed = tableView.dequeue(cell: cell, for: indexPath)
                 else { return UITableViewCell()  }
                 cell.selected = source.selected(indexPath: indexPath)
                 cell.set(selected: cell.selected, animated: false)
-                listed.wrap(cell: cell)
+                listed.wrap(cell: cell, separator: separator?.view)
+                return listed
+            case .custom:
+                guard let cell = source.cell(for: indexPath) as? Cell,
+                      let listed = tableView.dequeue(cell: cell, for: indexPath)
+                else { return UITableViewCell()  }
+                cell.selected = source.selected(indexPath: indexPath)
+                cell.set(selected: cell.selected, animated: false)
+                listed.wrap(cell: cell, separator: nil)
                 return listed
             default:
                 let template = validate(wrapper: section)
@@ -352,7 +360,7 @@ extension Composition {
                 wrapped.configure(in: indexPath.section, parent: self)
                 #endif
                 guard let wrapper = tableView.dequeue(wrapper: wrapped, for: indexPath, with: template) else { return UITableViewCell() }
-                wrapper.wrap(cell: wrapped)
+                wrapper.wrap(cell: wrapped, separator: nil)
                 return wrapper
             }
         }
@@ -381,9 +389,9 @@ extension Composition {
             switch style {
             case .grid, .horizontal:
                 return layout.height(for: section)
-            case .vertical:
+            case .vertical(_, let separator):
                 guard let item = source.item(for: indexPath) else { return .zero }
-                return layout.height(for: item, in: section)
+                return layout.height(for: item, in: section)+(separator?.height ?? .zero)
             case .custom(let height):
                 return height
             }
@@ -395,9 +403,9 @@ extension Composition {
             switch style {
             case .grid, .horizontal:
                 return layout.height(for: section)
-            case .vertical:
+            case .vertical(_, let separator):
                 guard let item = source.item(for: indexPath) else { return .zero }
-                return layout.height(for: item, in: section)
+                return layout.height(for: item, in: section)+(separator?.height ?? .zero)
             case .custom(let height):
                 return height
             }
@@ -514,6 +522,7 @@ extension Composition {
             unhighlighted(cell: cell, with: item, in: section, for: indexPath)
         }
         
+        #if os(tvOS)
         public func tableView(_ tableView: UITableView, canFocusRowAt indexPath: IndexPath) -> Bool {
             guard let section = source.section(for: indexPath.section),
                   let style = layout.style(for: section)
@@ -542,6 +551,7 @@ extension Composition {
             else { return }
             focused(cell: cell, with: item, in: section, for: indexPath, with: focus, using: coordinator)
         }
+        #endif
         
         public func scrollViewDidScroll(_ scrollView: UIScrollView) {
             scrolled()

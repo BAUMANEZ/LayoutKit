@@ -99,10 +99,13 @@ extension Cell {
 
 extension Cell {
     internal class Listed: UITableViewCell {
-        internal var wrapped: Cell?
+        internal private(set) var wrapped: Cell?
+        internal private(set) var separator: UIView?
                 
         override func prepareForReuse() {
             super.prepareForReuse()
+            separator?.removeFromSuperview()
+            separator = nil
             wrapped?.wrapper = nil
             wrapped?.prepareForReuse()
             wrapped?.removeFromSuperview()
@@ -125,14 +128,13 @@ extension Cell {
             self.indentationWidth = 0
             indentationLevel = 0
             contentScaleFactor = 1
-            
         }
         
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
         }
         
-        internal func wrap(cell: Cell) {
+        internal func wrap(cell: Cell, separator: UIView?) {
             self.wrapped = cell
             cell.wrapper = self
             cell.translatesAutoresizingMaskIntoConstraints = false
@@ -141,7 +143,17 @@ extension Cell {
             cell.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
             cell.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             cell.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
-            cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+            
+            guard let separator = separator else {
+                cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+                return
+            }
+            separator.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview(separator)
+            separator.topAnchor.constraint(equalTo: cell.bottomAnchor).isActive = true
+            separator.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
+            separator.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
+            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
         }
         
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
