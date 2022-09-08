@@ -112,7 +112,7 @@ extension Composition {
         public func cell(for indexPath: IndexPath) -> Compositional? {
             guard let section = self.section(for: indexPath.section),
                   let item = self.item(for: indexPath),
-                  let cell = provider?.cell?(indexPath, section, item)
+                  let cell = provider?.cell?(indexPath, item, section)
             else { return  nil }
             return cell
         }
@@ -131,9 +131,9 @@ extension Composition {
 
 extension Composition.Source {
     public class Provider {
-        public typealias Cell   = (IndexPath, Section, Item) -> Compositional?
-        public typealias Header = (Int, Section) -> Boundary?
-        public typealias Footer = (Int, Section) -> Boundary?
+        public typealias Cell   = (_ indexPath: IndexPath, _ item: Item, _ section: Section) -> Compositional?
+        public typealias Header = (_ index: Int, _ section: Section) -> Boundary?
+        public typealias Footer = (_ index: Int, _ section: Section) -> Boundary?
         
         public var cell  : Cell?
         public var header: Header?

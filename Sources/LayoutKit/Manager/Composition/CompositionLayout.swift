@@ -83,7 +83,7 @@ extension Composition {
                     let width  = size.width
                     let height = size.height
                     let fit    = frame.width - (insets.right + insets.left)
-                    guard fit > width else {
+                    guard fit >= width else {
                         let zero = Configuration.Automatic.zero
                         cache.store(automatic: zero, for: key, in: section)
                         return .zero
@@ -326,9 +326,9 @@ extension Composition.Layout {
         }
     }
     public class Provider {
-        public typealias Style  = (Section, CGSize) -> Composition.Layout<Section, Item>.Style?
-        public typealias Header = (Section, CGSize) -> Dimension?
-        public typealias Footer = (Section, CGSize) -> Dimension?
+        public typealias Style  = (_ section: Section, _ frame: CGSize) -> Composition.Layout<Section, Item>.Style?
+        public typealias Header = (_ section: Section, _ frame: CGSize) -> Dimension?
+        public typealias Footer = (_ section: Section, _ frame: CGSize) -> Dimension?
         
         public var style : Style?
         public var header: Header?
