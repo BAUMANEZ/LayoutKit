@@ -404,7 +404,9 @@ extension Composition {
                 return layout.height(for: section)
             case .vertical(_, let separator):
                 guard let item = source.item(for: indexPath) else { return .zero }
-                return layout.height(for: item, in: section)+(separator?.height ?? .zero)
+                let height = layout.height(for: item, in: section)
+                guard height != UITableView.automaticDimension else { return height }
+                return height+(separator?.height ?? .zero)
             case .custom(let height):
                 return height
             }
@@ -418,7 +420,9 @@ extension Composition {
                 return layout.height(for: section)
             case .vertical(_, let separator):
                 guard let item = source.item(for: indexPath) else { return .zero }
-                return layout.height(for: item, in: section)+(separator?.height ?? .zero)
+                let height = layout.height(for: item, in: section)
+                guard height != UITableView.automaticDimension else { return height }
+                return height+(separator?.height ?? .zero)
             case .custom(let height):
                 return height
             }

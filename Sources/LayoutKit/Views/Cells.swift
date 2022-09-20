@@ -137,17 +137,16 @@ extension Cell {
         internal func wrap(cell: Cell, separator: UIView?) {
             self.wrapped = cell
             cell.wrapper = self
+            
+            cell.frame = frame
             cell.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(cell)
-            
             cell.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
             cell.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             cell.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
+            cell.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor).isActive = true
             
-            guard let separator = separator else {
-                cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
-                return
-            }
+            guard let separator = separator else { return }
             separator.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(separator)
             separator.topAnchor.constraint(equalTo: cell.bottomAnchor).isActive = true
@@ -188,6 +187,7 @@ extension Cell {
         internal func wrap(cell: Cell) {
             self.wrapped = cell
             cell.wrapper = self
+            cell.frame = frame
             cell.translatesAutoresizingMaskIntoConstraints = false
             addSubview(cell)
             

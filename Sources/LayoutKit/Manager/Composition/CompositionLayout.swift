@@ -134,13 +134,13 @@ extension Composition {
             switch style {
             case .horizontal, .grid:
                 return size(for: item, in: section).height
-            case .vertical(let height, let separator):
+            case .vertical(let height, _):
                 guard let row = height(item) else { return .zero }
                 switch row {
                 case .automatic:
                     let key = Cache.Item.Fields.Key(width: frame.width)
                     guard let cached = cache.height(for: key, with: item, in: section) else { return UITableView.automaticDimension }
-                    return cached-(separator?.height ?? .zero)
+                    return cached
                 case .absolute(let height):
                     return height
                 case .zero:
