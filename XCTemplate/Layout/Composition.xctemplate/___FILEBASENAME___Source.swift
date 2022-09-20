@@ -7,7 +7,7 @@ import OrderedCollections
 extension ___VARIABLE_productName:identifier___List {
     public var _sourceProvider: Source.Provider {
         return Source.Provider(
-            cell: { indexPath, section, item in
+            cell: { indexPath, item, section in
                 return nil
             },
             header: { index, section in

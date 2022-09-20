@@ -72,6 +72,7 @@ extension Composition {
                         }
                     }()
                     cache.store(height: fullHeight, for: key, in: section)
+                    reload(grid: section)
                     return fullHeight
                 case .grid(let insets, let mode, let size):
                     /// Currently assuming that size for vertical is identical for all cells
@@ -116,6 +117,7 @@ extension Composition {
                     }()
                     let automatic = Configuration.Automatic(height: fullHeight, interItem: adaptedSpacing, interLine: indent, columns: columns)
                     cache.store(automatic: automatic, for: key, in: section)
+                    reload(grid: section)
                     return fullHeight
                 case .vertical(_, let separator):
                     return source.items(for: section).reduce(into: CGFloat.zero, {
@@ -221,6 +223,13 @@ extension Composition {
         }
         internal func removeAll() {
             cache.removeAll()
+        }
+        
+        private func reload(grid section: Section) {
+            DispatchQueue.main.async { [weak self] in
+                guard let index = self?.manager?.source.index(for: section) else { return }
+                ((self?.manager?.view.cellForRow(at: IndexPath(item: 0, section: index)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view.reloadData()
+            }
         }
     }
 }

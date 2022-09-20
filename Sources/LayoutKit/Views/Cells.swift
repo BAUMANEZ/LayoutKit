@@ -220,7 +220,7 @@ extension UITableView {
         register(Cell.Listed.self, forCellReuseIdentifier: cell.identifier)
     }
     internal func register(_ wrapper: Cell.Type, template: String? = nil) {
-        if let template = template {
+        if let template {
             register(Cell.Listed.self, forCellReuseIdentifier: wrapper.identifier + "_" + template)
         } else {
             register(wrapper.self)
@@ -230,7 +230,7 @@ extension UITableView {
         return dequeueReusableCell(withIdentifier: cell._identifier, for: indexPath) as? Cell.Listed
     }
     internal func dequeue(wrapper: Cell, for indexPath: IndexPath, with template: String? = nil) -> Cell.Listed? {
-        if let template = template {
+        if let template {
             return dequeueReusableCell(withIdentifier: wrapper._identifier + "_" + template, for: indexPath) as? Cell.Listed
         } else {
             return dequeue(cell: wrapper, for: indexPath)

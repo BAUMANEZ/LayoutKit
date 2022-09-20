@@ -223,6 +223,19 @@ extension Composition {
             view.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -margins.bottom).isActive = true
         }
         
+        open func set(sections: OrderedDictionary<Section, OrderedSet<Item>>, animated: Bool) {
+            source.snapshot.batch(updates: [.setSections(sections.keys, items: { sections[$0] })], animation: animated ? .fade : nil)
+        }
+        open func append(sections: OrderedDictionary<Section, OrderedSet<Item>>, animated: Bool) {
+            source.snapshot.batch(updates: [.appendSections(sections.keys, items: { sections[$0] })], animation: animated ? .fade : nil)
+        }
+        open func reloadAll(animated: Bool) {
+            source.snapshot.batch(updates: [.reloadSections(source.sections)], animation: animated ? .fade : nil)
+        }
+        open func deleteAll(animated: Bool) {
+            source.snapshot.batch(updates: [.deleteSections(source.sections)], animation: animated ? .fade : nil)
+        }
+        
         public func set(header: UIView, height: CGFloat, offset: CGPoint = .zero) {
             header.translatesAutoresizingMaskIntoConstraints = true
             header.frame = CGRect(x: offset.x, y: offset.y, width: view.frame.width, height: height)
@@ -257,7 +270,7 @@ extension Composition {
         
         public func select(item: Item, position: ScrollPosition?, animated: Bool = true, completion: (() -> Void)? = nil) {
             guard let section = source.section(for: item) else { return }
-            if let position = position {
+            if let position {
                 scroll(to: item, position: position, animated: animated)
             }
             set(item: item, in: section, selected: true, programatically: true, completion: completion)
