@@ -70,6 +70,12 @@ extension Composition {
         internal func set(identifier: String, for wrapper: Section) {
             self.wrappers[wrapper] = identifier
         }
+        internal func separatable(for indexPath: IndexPath) -> Bool {
+            guard let section = self.section(for: indexPath.section) else { return false }
+            let items = items(for: section)
+            guard items.indices.contains(indexPath.item) else { return false }
+            return indexPath.item < items.count-1
+        }
         
         //MARK: Get section or item
         public var sections: OrderedSet<Section> {

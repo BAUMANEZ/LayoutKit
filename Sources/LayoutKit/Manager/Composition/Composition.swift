@@ -351,7 +351,7 @@ extension Composition {
                 else { return UITableViewCell()  }
                 cell.selected = source.selected(indexPath: indexPath)
                 cell.set(selected: cell.selected, animated: false)
-                listed.wrap(cell: cell, separator: separator?.view)
+                listed.wrap(cell: cell, separator: source.separatable(for: indexPath) ? separator?.view : nil)
                 return listed
             case .custom:
                 guard let cell = source.cell(for: indexPath) as? Cell,
@@ -406,7 +406,11 @@ extension Composition {
                 guard let item = source.item(for: indexPath) else { return .zero }
                 let height = layout.height(for: item, in: section)
                 guard height != UITableView.automaticDimension else { return height }
-                return height+(separator?.height ?? .zero)
+                let _separator: CGFloat = {
+                    guard let separator = separator, source.separatable(for: indexPath) else { return .zero }
+                    return separator.height
+                }()
+                return height+(_separator)
             case .custom(let height):
                 return height
             }
@@ -422,7 +426,11 @@ extension Composition {
                 guard let item = source.item(for: indexPath) else { return .zero }
                 let height = layout.height(for: item, in: section)
                 guard height != UITableView.automaticDimension else { return height }
-                return height+(separator?.height ?? .zero)
+                let _separator: CGFloat = {
+                    guard let separator = separator, source.separatable(for: indexPath) else { return .zero }
+                    return separator.height
+                }()
+                return height+(_separator)
             case .custom(let height):
                 return height
             }

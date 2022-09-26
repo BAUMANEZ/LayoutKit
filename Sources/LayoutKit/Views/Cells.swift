@@ -144,9 +144,11 @@ extension Cell {
             cell.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
             cell.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             cell.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
-            cell.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor).isActive = true
             
-            guard let separator = separator else { return }
+            guard let separator = separator else {
+                cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+                return
+            }
             separator.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(separator)
             separator.topAnchor.constraint(equalTo: cell.bottomAnchor).isActive = true
