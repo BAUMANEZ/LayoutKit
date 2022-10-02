@@ -171,7 +171,7 @@ extension Composition {
             switch layout.style(for: section) {
             case .vertical(_, let separator):
                 guard let cell = source.cell(for: indexPath) as? Cell,
-                      let listed = tableView.dequeue(cell: cell, for: indexPath)
+                      let listed = lastDequedCell ?? tableView.dequeue(cell: cell, for: indexPath)
                 else { return UITableViewCell()  }
                 cell.selected = source.selected(indexPath: indexPath)
                 cell.set(selected: cell.selected, animated: false)
@@ -545,6 +545,26 @@ extension Composition {
         public func set(behaviour provider: Behaviour.Provider?) {
             behaviour.provider = provider
         }
+        
+        public final func dequeue<T: Cell>(
+            cell: T.Type,
+            for indexPath: IndexPath
+        ) -> T? {
+            guard let section = source.section(for: indexPath.section),
+                  let style = layout.style(for: section)
+            else { return nil }
+            switch style {
+            case .vertical, .custom:
+                guard let listed = view.dequeue(cell: T.self, for: indexPath) else {
+                    lastDequedCell = nil
+                    return T(frame: .zero)
+                }
+                lastDequedCell = listed
+                return (listed.wrapped as? T) ?? T(frame: .zero)
+            default:
+                return grid(for: indexPath.section)?.grid?.dequeue(cell: T.self, with: indexPath.item)
+            }
+        }
 
         //MARK: Override these properties to register
         /// - cells: table view cells and collection view cells
@@ -879,18 +899,6 @@ extension Composition.Manager {
     }
     internal final func scroll(to indexPath: IndexPath, at position: UITableView.ScrollPosition, animated: Bool) {
         view.scrollToRow(at: indexPath, at: position, animated: animated)
-    }
-    internal final func dequeue<T: Cell>(
-        cell: T.Type,
-        with item: Int,
-        in section: Int
-    ) -> T {
-        guard let listed = view.dequeue(cell: T.self, for: IndexPath(item: item, section: section)) else {
-            lastDequedCell = nil
-            return T(frame: .zero)
-        }
-        lastDequedCell = listed
-        return (listed.wrapped as? T) ?? T(frame: .zero)
     }
 }
 

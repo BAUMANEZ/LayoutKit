@@ -467,7 +467,7 @@ extension Grid.Manager {
         cell: T.Type,
         with item: Int
     ) -> T? {
-        guard let grided = view.dequeue(cell: T.self, for: IndexPath(item: item, section: 0)) else {
+        guard let grided = view.dequeue(cell: T.self, for: IndexPath(item: item%mod, section: 0)) else {
             lastDequedCell = nil
             return T(frame: .zero)
         }
