@@ -875,7 +875,7 @@ extension Composition.Manager {
         return (cell as? Cell.Listed)?.wrapped
     }
     internal final func set(selected: Bool, indexPath: IndexPath, animated: Bool = false) {
-        view.deselectRow(at: indexPath, animated: false)
+        selected ? view.selectRow(at: indexPath, animated: false, scrollPosition: .none) : view.deselectRow(at: indexPath, animated: false)
     }
     internal final func scroll(to indexPath: IndexPath, at position: UITableView.ScrollPosition, animated: Bool) {
         view.scrollToRow(at: indexPath, at: position, animated: animated)
