@@ -58,24 +58,13 @@ extension Grid {
                 view.showsHorizontalScrollIndicator = false
                 view.isScrollEnabled = false
                 (view.collectionViewLayout as? UICollectionViewFlowLayout)?.scrollDirection = .vertical
-            case .horizontal(_, _, let rows, _):
+            case .horizontal(_, _, _, _):
                 view.alwaysBounceVertical = false
                 view.showsVerticalScrollIndicator = false
                 view.alwaysBounceHorizontal = true
-                view.showsHorizontalScrollIndicator = true
+                view.showsHorizontalScrollIndicator = false
                 view.isScrollEnabled = true
                 (view.collectionViewLayout as? UICollectionViewFlowLayout)?.scrollDirection = .horizontal
-                switch rows {
-                case .infinite :
-                    guard parent.source.offset(in: section) == nil else { break }
-//                    DispatchQueue.main.async { [weak self] in
-//                        guard let self = self else { return }
-//                        let selected = parent.source.items(for: section).firstIndex(where: { parent.source.selected(item: $0) }) ?? 0
-//                        self.view.scrollToItem(at: IndexPath(item: (parent.source.items(for: section).count+selected)*self.multiplier/2, section: 0), at: .centeredHorizontally, animated: false)
-//                    }
-                default:
-                    break
-                }
             }
             
             parent.source.items(for: section).enumerated().filter{ parent.source.selected(item: $0.element) }.forEach {
@@ -456,11 +445,11 @@ extension Grid.Manager {
     internal final func wrapped(for cell: UICollectionViewCell) -> Cell? {
         return (cell as? Cell.Grided)?.wrapped
     }
-    internal func set(selected: Bool, item: Int, animated: Bool = false) {
+    internal final func set(selected: Bool, item: Int, animated: Bool = false) {
         let indexPath = IndexPath(item: item, section: 0)
         selected ? view.selectItem(at: indexPath, animated: animated, scrollPosition: []) : view.deselectItem(at: indexPath, animated: animated)
     }
-    internal func scroll(to item: Int, at position: UICollectionView.ScrollPosition, animated: Bool) {
+    internal final func scroll(to item: Int, at position: UICollectionView.ScrollPosition, animated: Bool) {
         view.scrollToItem(at: IndexPath(item: item, section: 0), at: position, animated: animated)
     }
     internal final func dequeue<T: Cell>(

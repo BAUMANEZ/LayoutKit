@@ -25,11 +25,13 @@ internal protocol BoundaryDelegate: AnyObject {
 }
 
 open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
+    internal let dequeID = UUID()
+    
     //MARK: Main properties
     /// - identifier: override this property for your custom boundary view. This property is used when dequeueing view
     /// - scheme: use this property together with paint(scheme:) function to apply colors to your view
     open class var identifier: String {
-        return "defaultBoundaryView"
+        return String(describing: Self.self)
     }
     internal var _identifier: String {
         return Self.identifier
@@ -47,12 +49,11 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
     
     open func prepareForReuse() {}
     
-    public init() {
+    public override required init(frame: CGRect = .zero) {
         super.init(frame: .zero)
         setupContent()
         setup()
     }
-    
     public required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -81,7 +82,7 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
 }
 
 extension Boundary {
-    internal class Listed: UITableViewHeaderFooterView {
+    internal final class Listed: UITableViewHeaderFooterView {
         internal var wrapped: Boundary?
         internal weak var delegate: BoundaryDelegate?
         private var section: Int?
@@ -100,18 +101,18 @@ extension Boundary {
             fatalError("init(coder:) has not been implemented")
         }
         
-        override func prepareForReuse() {
+        internal override func prepareForReuse() {
             super.prepareForReuse()
-            wrapped?.prepareForReuse()
-            wrapped?.removeFromSuperview()
-            wrapped = nil
             section = nil
+            delegate = nil
+            wrapped?.prepareForReuse()
         }
         
         internal func wrap(boundary: Boundary, in section: Int, isHeader: Bool) {
             self.isHeader = isHeader
             self.section = section
-            self.wrapped = boundary
+            wrapped?.removeFromSuperview()
+            wrapped = boundary
             boundary.translatesAutoresizingMaskIntoConstraints = false
             addSubview(boundary)
             
@@ -199,5 +200,8 @@ extension UITableView {
     }
     internal func dequeue(_ view: Boundary) -> Boundary.Listed? {
         dequeueReusableHeaderFooterView(withIdentifier: view._identifier) as? Boundary.Listed
+    }
+    internal func dequeue(_ view: Boundary.Type) -> Boundary.Listed? {
+        dequeueReusableHeaderFooterView(withIdentifier: view.identifier) as? Boundary.Listed
     }
 }
