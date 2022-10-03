@@ -8,6 +8,10 @@
 import UIKit
 
 open class Cell: UIView, Compositional {
+    //MARK: - Internal Properties
+    /// - id: used for deque
+    internal let dequeID = UUID()
+    
     //MARK: Main properties
     /// - identifier: override this property for your custom cell. This property is used when dequeueing cell
     /// - scheme: use this property together with paint(scheme:) function to apply colors to your cell
@@ -32,7 +36,7 @@ open class Cell: UIView, Compositional {
         return .zero
     }
     
-    public init() {
+    public override required init(frame: CGRect = .zero) {
         super.init(frame: .zero)
         setupContent()
         setup()
@@ -45,6 +49,8 @@ open class Cell: UIView, Compositional {
     //MARK: Entry point for cell layout cofiguration
     open func setup() {}
     private func setupContent() {
+        backgroundColor = .clear
+        content.backgroundColor = .clear
         clipsToBounds = false
         content.clipsToBounds = false
         backgroundColor = .clear
@@ -65,7 +71,7 @@ open class Cell: UIView, Compositional {
             self.content.transform = highlighted ? CGAffineTransform(scaleX: 0.95, y: 0.95) : .identity
         }, completion: nil)
     }
-    open func set(focused: Bool, animated: Bool = true) {}
+    open func set(focused: Bool, context: UIFocusUpdateContext, coordinator: UIFocusAnimationCoordinator) {}
 }
 
 extension Cell {
@@ -92,23 +98,21 @@ extension Cell {
         internal func configure(in section: Int, parent: Parent) {
             self.grid = Child(parent: parent, section: section, in: content)
         }
-        
-        internal func set(offset: CGPoint?) {
-            grid?.view.contentOffset = offset ?? CGPoint(x: 15000, y: 0)
-        }
     }
 }
 
 extension Cell {
     internal class Listed: UITableViewCell {
-        internal var wrapped: Cell?
+        internal private(set) var wrapped: Cell?
+        internal private(set) var separator: UIView?
+        
+        private var bottom: NSLayoutConstraint?
                 
         override func prepareForReuse() {
             super.prepareForReuse()
-            wrapped?.wrapper = nil
             wrapped?.prepareForReuse()
-            wrapped?.removeFromSuperview()
-            wrapped = nil
+            separator?.removeFromSuperview()
+            separator = nil
         }
         
         override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -127,7 +131,6 @@ extension Cell {
             self.indentationWidth = 0
             indentationLevel = 0
             contentScaleFactor = 1
-            
         }
         
         required init?(coder: NSCoder) {
@@ -135,20 +138,33 @@ extension Cell {
         }
         
         internal func wrap(cell: Cell) {
+            bottom?.isActive = false
+            self.wrapped?.wrapper = nil
+            self.wrapped?.removeFromSuperview()
             self.wrapped = cell
             cell.wrapper = self
             cell.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(cell)
-            
             cell.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
             cell.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             cell.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
-            cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+            bottom = cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor); bottom?.isActive = true
+        }
+        internal func insert(separator: UIView, in cell: Cell) {
+            bottom?.isActive = false
+            bottom = nil
+            self.separator = separator
+            separator.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview(separator)
+            separator.topAnchor.constraint(equalTo: cell.bottomAnchor).isActive = true
+            separator.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
+            separator.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
+            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
         }
         
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
             wrapped?.focusing = isFocused
-            wrapped?.set(focused: isFocused, animated: true)
+            wrapped?.set(focused: isFocused, context: context, coordinator: coordinator)
         }
     }
 }
@@ -159,10 +175,7 @@ extension Cell {
         
         override func prepareForReuse() {
             super.prepareForReuse()
-            wrapped?.wrapper = nil
             wrapped?.prepareForReuse()
-            wrapped?.removeFromSuperview()
-            wrapped = nil
         }
         
         internal override init(frame: CGRect) {
@@ -176,8 +189,11 @@ extension Cell {
         }
         
         internal func wrap(cell: Cell) {
+            self.wrapped?.wrapper = nil
+            self.wrapped?.removeFromSuperview()
             self.wrapped = cell
             cell.wrapper = self
+            cell.frame = frame
             cell.translatesAutoresizingMaskIntoConstraints = false
             addSubview(cell)
             
@@ -189,7 +205,7 @@ extension Cell {
         
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
             wrapped?.focusing = isFocused
-            wrapped?.set(focused: isFocused, animated: true)
+            wrapped?.set(focused: isFocused, context: context, coordinator: coordinator)
         }
     }
 }
@@ -210,7 +226,7 @@ extension UITableView {
         register(Cell.Listed.self, forCellReuseIdentifier: cell.identifier)
     }
     internal func register(_ wrapper: Cell.Type, template: String? = nil) {
-        if let template = template {
+        if let template {
             register(Cell.Listed.self, forCellReuseIdentifier: wrapper.identifier + "_" + template)
         } else {
             register(wrapper.self)
@@ -219,9 +235,12 @@ extension UITableView {
     internal func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Listed? {
         return dequeueReusableCell(withIdentifier: cell._identifier, for: indexPath) as? Cell.Listed
     }
-    internal func dequeue(wrapper: Cell, for indexPath: IndexPath, with template: String? = nil) -> Cell.Listed? {
-        if let template = template {
-            return dequeueReusableCell(withIdentifier: wrapper._identifier + "_" + template, for: indexPath) as? Cell.Listed
+    internal func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Listed? {
+        return dequeueReusableCell(withIdentifier: cell.identifier, for: indexPath) as? Cell.Listed
+    }
+    internal func dequeue(wrapper: Cell.Type, for indexPath: IndexPath, with template: String? = nil) -> Cell.Listed? {
+        if let template {
+            return dequeueReusableCell(withIdentifier: wrapper.identifier + "_" + template, for: indexPath) as? Cell.Listed
         } else {
             return dequeue(cell: wrapper, for: indexPath)
         }
@@ -237,6 +256,9 @@ extension UICollectionView {
     }
     internal func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Grided? {
         return dequeueReusableCell(withReuseIdentifier: cell._identifier, for: indexPath) as? Cell.Grided
+    }
+    internal func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Grided? {
+        return dequeueReusableCell(withReuseIdentifier: cell.identifier, for: indexPath) as? Cell.Grided
     }
     internal func dequeue(cell: Cell, template: String, for indexPath: IndexPath) -> Cell.Grided? {
         return dequeueReusableCell(withReuseIdentifier: cell._identifier + "_" + template, for: indexPath) as? Cell.Grided

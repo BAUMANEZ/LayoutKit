@@ -70,6 +70,12 @@ extension Composition {
         internal func set(identifier: String, for wrapper: Section) {
             self.wrappers[wrapper] = identifier
         }
+        internal func separatable(for indexPath: IndexPath) -> Bool {
+            guard let section = self.section(for: indexPath.section) else { return false }
+            let items = items(for: section)
+            guard items.indices.contains(indexPath.item) else { return false }
+            return indexPath.item < items.count-1
+        }
         
         //MARK: Get section or item
         public var sections: OrderedSet<Section> {
@@ -112,7 +118,7 @@ extension Composition {
         public func cell(for indexPath: IndexPath) -> Compositional? {
             guard let section = self.section(for: indexPath.section),
                   let item = self.item(for: indexPath),
-                  let cell = provider?.cell?(indexPath, section, item)
+                  let cell = provider?.cell?(indexPath, item, section)
             else { return  nil }
             return cell
         }
@@ -131,9 +137,9 @@ extension Composition {
 
 extension Composition.Source {
     public class Provider {
-        public typealias Cell   = (IndexPath, Section, Item) -> Compositional?
-        public typealias Header = (Int, Section) -> Boundary?
-        public typealias Footer = (Int, Section) -> Boundary?
+        public typealias Cell   = (_ indexPath: IndexPath, _ item: Item, _ section: Section) -> Compositional?
+        public typealias Header = (_ index: Int, _ section: Section) -> Boundary?
+        public typealias Footer = (_ index: Int, _ section: Section) -> Boundary?
         
         public var cell  : Cell?
         public var header: Header?
@@ -173,8 +179,12 @@ extension Composition.Source {
                         dSections = delete
                         iSections = insert
                     }
-                case .addSections(let sections, let items):
-                    self.add(sections: sections, items: items) { insert in
+                case .appendSections(let sections, let items):
+                    self.append(sections: sections, items: items) { insert in
+                        iSections = insert
+                    }
+                case .addSections(let sections, let index, let items):
+                    self.add(sections: sections, to: index, items: items) { insert in
                         iSections = insert
                     }
                 case .deleteSections(let sections):
@@ -189,7 +199,7 @@ extension Composition.Source {
                     self.set(items: items, to: section) { delete, insert in
                         dItems = delete
                     }
-                case .addItems(let items, let section):
+                case .appendItems(let items, let section):
                     self.add(items: items, to: section) { insert in
                         iItems = insert
                     }
@@ -197,38 +207,30 @@ extension Composition.Source {
                     self.refresh()
                     list.beginUpdates()
                     list.endUpdates()
+                    continue
                 }
+                guard let animation = animation else { list.reloadData(); continue }
+                list.beginUpdates()
                 if let dSections = dSections, !dSections.isEmpty {
-                    guard let animation = animation else { list.reloadData(); continue }
-                    list.beginUpdates()
                     list.deleteSections(dSections, with: animation)
-                    list.endUpdates()
                 }
                 if let iSections = iSections, !iSections.isEmpty {
-                    guard let animation = animation else { list.reloadData(); continue }
-                    list.beginUpdates()
                     list.insertSections(iSections, with: animation)
-                    list.endUpdates()
                 }
                 if let rSections = rSections, !rSections.isEmpty {
-                    guard let animation = animation else { list.reloadData(); continue }
-                    list.beginUpdates()
                     list.reloadSections(rSections, with: animation)
-                    list.endUpdates()
                 }
                 if !dItems.isEmpty {
-                    guard let animation = animation else { list.reloadData(); continue }
-                    list.beginUpdates()
                     list.deleteRows(at: Array(dItems), with: animation)
-                    list.endUpdates()
                 }
                 if !iItems.isEmpty {
-                    guard let animation = animation else { list.reloadData(); continue }
-                    list.beginUpdates()
                     list.insertRows(at: Array(iItems), with: animation)
-                    list.endUpdates()
                 }
+                list.endUpdates()
             }
+        }
+        public func reload() {
+            source?.manager?.view.reloadData()
         }
 
         private func set(sections: OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?, completion: (IndexSet, IndexSet) -> Void) {
@@ -237,13 +239,13 @@ extension Composition.Source {
             source?.offsets.removeAll()
             source?.selected.removeAll()
             source?.wrappers.removeAll()
+            self.items.removeAll()
             let delete = IndexSet(self.sections.indices)
             let insert = IndexSet(sections.indices)
             let grids = self.sections.enumerated().compactMap { index, section in
                 return ((source?.manager?.view.cellForRow(at: IndexPath(item: 0, section: index)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view
             }
             self.sections = sections
-            self.items.removeAll()
             sections.enumerated().forEach { index, updated in
                 guard let items = items?(updated), items.count > 0 else { return }
                 self.items[updated] = items
@@ -254,10 +256,21 @@ extension Composition.Source {
             completion(delete, insert)
         }
         
-        private func add(sections: OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?, completion: (IndexSet) -> Void) {
+        private func append(sections: OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?, completion: (IndexSet) -> Void) {
             guard sections.count > 0 else { completion([]); return }
             let insert = IndexSet(sections.indices.map{ $0 + self.sections.count })
             self.sections.append(contentsOf: sections)
+            sections.enumerated().forEach { index, new in
+                guard let items = items?(new), items.count > 0 else { return }
+                self.items[new] = items
+            }
+            completion(insert)
+        }
+        
+        private func add(sections: OrderedSet<Section>, to index: Int, items: ((Section) -> OrderedSet<Item>?)?, completion: (IndexSet) -> Void) {
+            guard sections.count > 0 else { completion([]); return }
+            let insert = IndexSet(sections.indices.map{ $0 + index })
+            self.sections = OrderedSet(Array(self.sections[0..<index])+Array(sections)+Array(self.sections[index...]))
             sections.enumerated().forEach { index, new in
                 guard let items = items?(new), items.count > 0 else { return }
                 self.items[new] = items
@@ -296,6 +309,7 @@ extension Composition.Source {
         }
         
         private func set(items: OrderedSet<Item>, to section: Section, completion: (Set<IndexPath>, Set<IndexPath>) -> Void) {
+            source?.manager?.layout.remove(section: section)
             guard let _section = self.sections.firstIndex(of: section),
                   let source = source,
                   let layout = source.manager?.layout,
@@ -322,6 +336,7 @@ extension Composition.Source {
             }
         }
         private func add(items: OrderedSet<Item>, to section: Section, completion: (Set<IndexPath>) -> Void) {
+            source?.manager?.layout.remove(section: section)
             guard items.count > 0, let _section = self.sections.firstIndex(of: section) else { completion([]); return }
             var update = self.items[section] ?? []
             let _items = update.count
@@ -346,12 +361,13 @@ extension Composition.Source {
         
         public enum Update {
             case setSections(OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?)
-            case addSections(OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?)
+            case appendSections(OrderedSet<Section>, items: ((Section) -> OrderedSet<Item>?)?)
+            case addSections(OrderedSet<Section>, to: Int, items: ((Section) -> OrderedSet<Item>?)?)
             case deleteSections(OrderedSet<Section>)
             case reloadSections(OrderedSet<Section>)
             
             case setItems(OrderedSet<Item>, to: Section)
-            case addItems(OrderedSet<Item>, to: Section)
+            case appendItems(OrderedSet<Item>, to: Section)
             
             case refresh
         }

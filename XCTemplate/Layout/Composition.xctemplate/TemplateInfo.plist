@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Kind</key>
+	<string>Xcode.IDEKit.TextSubstitutionFileTemplateKind</string>
+	<key>Platforms</key>
+	<array/>
+	<key>Options</key>
+	<array>
+		<dict>
+			<key>Identifier</key>
+			<string>productName</string>
+			<key>Required</key>
+			<true/>
+			<key>Name</key>
+			<string>Composition Name</string>
+			<key>Description</key>
+			<string>Composition Name</string>
+			<key>Type</key>
+			<string>text</string>
+			<key>Default</key>
+			<string>Composition</string>
+		</dict>
+		<dict>
+			<key>Identifier</key>
+			<string>sectionName</string>
+			<key>Required</key>
+			<true/>
+			<key>Name</key>
+			<string>Section name</string>
+			<key>Description</key>
+			<string>Section name</string>
+			<key>Type</key>
+			<string>text</string>
+			<key>Default</key>
+			<string>Section</string>
+		</dict>
+		<dict>
+			<key>Identifier</key>
+			<string>itemName</string>
+			<key>Required</key>
+			<true/>
+			<key>Name</key>
+			<string>Item name</string>
+			<key>Description</key>
+			<string>Item name</string>
+			<key>Type</key>
+			<string>text</string>
+			<key>Default</key>
+			<string>Item</string>
+		</dict>
+	</array>
+</dict>
+</plist>

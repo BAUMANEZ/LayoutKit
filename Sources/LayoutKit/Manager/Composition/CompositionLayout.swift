@@ -72,6 +72,7 @@ extension Composition {
                         }
                     }()
                     cache.store(height: fullHeight, for: key, in: section)
+                    reload(grid: section)
                     return fullHeight
                 case .grid(let insets, let mode, let size):
                     /// Currently assuming that size for vertical is identical for all cells
@@ -83,7 +84,7 @@ extension Composition {
                     let width  = size.width
                     let height = size.height
                     let fit    = frame.width - (insets.right + insets.left)
-                    guard fit > width else {
+                    guard fit >= width else {
                         let zero = Configuration.Automatic.zero
                         cache.store(automatic: zero, for: key, in: section)
                         return .zero
@@ -116,10 +117,11 @@ extension Composition {
                     }()
                     let automatic = Configuration.Automatic(height: fullHeight, interItem: adaptedSpacing, interLine: indent, columns: columns)
                     cache.store(automatic: automatic, for: key, in: section)
+                    reload(grid: section)
                     return fullHeight
-                case .vertical:
+                case .vertical(_, let separator):
                     return source.items(for: section).reduce(into: CGFloat.zero, {
-                        $0 += height(for: $1, in: section)
+                        $0 += height(for: $1, in: section)+(separator?.height ?? .zero)
                     })
                 case .custom(let height):
                     return height
@@ -132,7 +134,7 @@ extension Composition {
             switch style {
             case .horizontal, .grid:
                 return size(for: item, in: section).height
-            case .vertical(let height):
+            case .vertical(let height, _):
                 guard let row = height(item) else { return .zero }
                 switch row {
                 case .automatic:
@@ -222,6 +224,13 @@ extension Composition {
         internal func removeAll() {
             cache.removeAll()
         }
+        
+        private func reload(grid section: Section) {
+            DispatchQueue.main.async { [weak self] in
+                guard let index = self?.manager?.source.index(for: section) else { return }
+                ((self?.manager?.view.cellForRow(at: IndexPath(item: 0, section: index)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view.reloadData()
+            }
+        }
     }
 }
 
@@ -234,7 +243,7 @@ extension Composition.Layout {
     public enum Style {
         case grid      (insets: UIEdgeInsets, mode: Mode, size: (Item) -> CGSize?)
         case custom    (height: CGFloat)
-        case vertical  (height: (Item) -> Dimension?)
+        case vertical  (height: (Item) -> Dimension?, separator: Separator?)
         case horizontal(insets: UIEdgeInsets, spacing: CGFloat, rows: Rows, size: (Item) -> CGSize?)
         
         public enum Mode {
@@ -261,25 +270,74 @@ extension Composition.Layout {
                 }
             }
         }
-        
         public enum Rows: Equatable {
-            case finite(rows: Int)
-            case infinite
+            case finite(rows: Int, scrolling: Scrolling)
+            case infinite(scrolling: Scrolling)
             
             public var count: Int {
                 switch self {
-                case .finite(let rows):
+                case .finite(let rows, _):
                     return rows
                 case .infinite:
                     return 1
                 }
             }
+            public enum Scrolling {
+                case centerted
+                case automatic
+            }
+        }
+        public enum Separator {
+            case spacer(CGFloat)
+            case line(color: UIColor, thickness: CGFloat, insets: UIEdgeInsets)
+            case custom(UIView, thickness: CGFloat, insets: UIEdgeInsets)
+            
+            public var height: CGFloat {
+                switch self {
+                case .spacer(let space):
+                    return space
+                case .line(_, let thickness, let insets):
+                    return thickness+insets.top+insets.bottom
+                case .custom(_, let thickness, let insets):
+                    return thickness+insets.top+insets.bottom
+                }
+            }
+            
+            public var view: UIView {
+                let view: UIView
+                let height: CGFloat
+                let insets: UIEdgeInsets
+                switch self {
+                case .spacer(let space):
+                    view = UIView()
+                    height = space
+                    insets = .zero
+                case .line(let color, let thickness, let _insets):
+                    view = UIView(); view.backgroundColor = color
+                    height = thickness
+                    insets = _insets
+                case .custom(let _view, let thickness, let _insets):
+                    view = _view
+                    height = thickness
+                    insets = _insets
+                }
+                let container = UIView()
+                container.translatesAutoresizingMaskIntoConstraints = false
+                view.translatesAutoresizingMaskIntoConstraints = false
+                container.addSubview(view)
+                view.topAnchor.constraint(equalTo: container.topAnchor, constant: insets.top).isActive = true
+                view.leftAnchor.constraint(equalTo: container.leftAnchor, constant: insets.left).isActive = true
+                view.rightAnchor.constraint(equalTo: container.rightAnchor, constant: -insets.right).isActive = true
+                view.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -insets.bottom).isActive = true
+                view.heightAnchor.constraint(equalToConstant: height).isActive = true
+                return container
+            }
         }
     }
     public class Provider {
-        public typealias Style  = (Section, CGSize) -> Composition.Layout<Section, Item>.Style?
-        public typealias Header = (Section, CGSize) -> Dimension?
-        public typealias Footer = (Section, CGSize) -> Dimension?
+        public typealias Style  = (_ section: Section, _ frame: CGSize) -> Composition.Layout<Section, Item>.Style?
+        public typealias Header = (_ section: Section, _ frame: CGSize) -> Dimension?
+        public typealias Footer = (_ section: Section, _ frame: CGSize) -> Dimension?
         
         public var style : Style?
         public var header: Header?
