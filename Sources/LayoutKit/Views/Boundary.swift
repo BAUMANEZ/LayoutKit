@@ -66,10 +66,12 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
         addSubview(content)
         
         let insets = insets
-        content.topAnchor.constraint(equalTo: topAnchor, constant: insets.top).isActive = true
+        let top = content.topAnchor.constraint(equalTo: topAnchor, constant: insets.top)
+        top.priority = .defaultHigh; top.isActive = true
         content.leftAnchor.constraint(equalTo: leftAnchor, constant: insets.left).isActive = true
         content.rightAnchor.constraint(equalTo: rightAnchor, constant: -insets.right).isActive = true
-        content.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -insets.bottom).isActive = true
+        let bottom = content.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -insets.bottom);
+        bottom.priority = .defaultHigh; bottom.isActive = true
     }
     
     open func selected() {}
@@ -85,7 +87,7 @@ extension Boundary {
     internal final class Listed: UITableViewHeaderFooterView {
         internal var wrapped: Boundary?
         internal weak var delegate: BoundaryDelegate?
-        private var section: Int?
+        internal var section: Int?
         private var isHeader = true
         
         override var canBecomeFocused: Bool {
@@ -103,14 +105,12 @@ extension Boundary {
         
         internal override func prepareForReuse() {
             super.prepareForReuse()
-            section = nil
             delegate = nil
             wrapped?.prepareForReuse()
         }
         
-        internal func wrap(boundary: Boundary, in section: Int, isHeader: Bool) {
+        internal func wrap(boundary: Boundary, isHeader: Bool) {
             self.isHeader = isHeader
-            self.section = section
             wrapped?.removeFromSuperview()
             wrapped = boundary
             boundary.translatesAutoresizingMaskIntoConstraints = false

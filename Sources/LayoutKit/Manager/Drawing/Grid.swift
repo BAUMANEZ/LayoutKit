@@ -27,10 +27,12 @@ extension Grid {
                 
         //MARK: - Init
         internal init(parent: Parent, section: Int, in content: UIView) {
-            self.view = UICollectionView(frame: content.frame, collectionViewLayout: UICollectionViewFlowLayout())
+            let flow = FlowLayout<Section, Item>()
+            self.view = UICollectionView(frame: content.frame, collectionViewLayout: flow)
             self.parent = parent
             self._section = section
             super.init()
+            flow.grid = self
             setup(in: content)
         }
         
@@ -58,7 +60,16 @@ extension Grid {
                 view.showsHorizontalScrollIndicator = false
                 view.isScrollEnabled = false
                 (view.collectionViewLayout as? UICollectionViewFlowLayout)?.scrollDirection = .vertical
-            case .horizontal(_, _, _, _):
+            case .horizontal(_, _, let rows, _):
+                switch rows {
+                case .infinite(let scrolling), .finite(_, let scrolling):
+                    switch scrolling {
+                    case .centerted:
+                        view.decelerationRate = .fast
+                    default:
+                        break
+                    }
+                }
                 view.alwaysBounceVertical = false
                 view.showsVerticalScrollIndicator = false
                 view.alwaysBounceHorizontal = true

@@ -187,8 +187,8 @@ extension Composition {
                 if cell.dequeID != listed.wrapped?.dequeID {
                     listed.wrap(cell: cell)
                 }
-                if source.separatable(for: indexPath), let separator = separator?.view {
-                    listed.insert(separator: separator, in: cell)
+                if let separator, separator.includingLast || source.separatable(for: indexPath) {
+                    listed.insert(separator: separator.view, in: cell)
                 }
                 return listed
             case .custom:
@@ -213,8 +213,9 @@ extension Composition {
                   let listed = lastDequedBoundary ?? tableView.dequeue(boundary)
             else { return nil }
             listed.delegate = self
+            listed.section = section
             if boundary.dequeID != listed.wrapped?.dequeID {
-                listed.wrap(boundary: boundary, in: section, isHeader: true)                
+                listed.wrap(boundary: boundary, isHeader: true)
             }
             return listed
         }
@@ -226,7 +227,10 @@ extension Composition {
                   let listed = tableView.dequeue(boundary)
             else { return nil }
             listed.delegate = self
-            listed.wrap(boundary: boundary, in: section, isHeader: false)
+            listed.section = section
+            if boundary.dequeID != listed.wrapped?.dequeID {
+                listed.wrap(boundary: boundary, isHeader: false)
+            }
             return listed
         }
         
@@ -918,7 +922,7 @@ extension Composition.Manager {
         guard !source.selected(item: item) else { return }
         if !behaviour.multiselection(section: section) {
             source.items(for: section).enumerated().filter{ source.selected(item: $0.element) }.forEach {
-                source.set(item: item, selected: false)
+                source.set(item: $0.element, selected: false)
                 set(item: $0.element, _item: $0.offset, section: section, _section: indexPath.section, style: style, selected: false, programatically: true)
             }
         }
