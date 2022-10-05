@@ -20,7 +20,7 @@ extension Grid {
         internal final let multiplier = 1000
         internal final var mod: Int {
             guard let parent, let section = parent.source.section(for: _section) else { return 1 }
-            return parent.source.items(for: section).count
+            return max(1, parent.source.items(for: section).count)
         }
         
         private var lastDequedCell: Cell.Grided?
@@ -467,7 +467,7 @@ extension Grid.Manager {
         cell: T.Type,
         with item: Int
     ) -> T? {
-        guard let grided = view.dequeue(cell: T.self, for: IndexPath(item: item%mod, section: 0)) else {
+        guard let grided = view.dequeue(cell: cell, for: IndexPath(item: item%mod, section: 0)) else {
             lastDequedCell = nil
             return T(frame: .zero)
         }
