@@ -138,7 +138,6 @@ extension Cell {
         }
         
         internal func wrap(cell: Cell) {
-            bottom?.isActive = false
             self.wrapped?.wrapper = nil
             self.wrapped?.removeFromSuperview()
             self.wrapped = cell
@@ -148,7 +147,6 @@ extension Cell {
             cell.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
             cell.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             cell.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
-            bottom = cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor); bottom?.isActive = true
         }
         internal func insert(separator: UIView, in cell: Cell) {
             bottom?.isActive = false
@@ -160,6 +158,9 @@ extension Cell {
             separator.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             separator.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
             separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+        }
+        internal func pin(bottom cell: Cell) {
+            bottom = cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor); bottom?.isActive = true
         }
         
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {

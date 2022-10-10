@@ -131,6 +131,7 @@ extension Grid {
                   let cell = parent.source.cell(for: _indexPath) as? Cell,
                   let grided = lastDequedCell ?? collectionView.dequeue(cell: cell, for: indexPath)
             else { return collectionView.dequeue(cell: Cell(), for: indexPath) ?? UICollectionViewCell() }
+            lastDequedCell = nil
             cell.selected = parent.source.selected(indexPath: _indexPath)
             cell.set(selected: cell.selected, animated: false)
             if cell.dequeID != grided.wrapped?.dequeID {

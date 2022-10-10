@@ -182,6 +182,7 @@ extension Composition {
                 guard let cell = source.cell(for: indexPath) as? Cell,
                       let listed = lastDequedCell ?? tableView.dequeue(cell: cell, for: indexPath)
                 else { return UITableViewCell()  }
+                lastDequedCell = nil
                 cell.selected = source.selected(indexPath: indexPath)
                 cell.set(selected: cell.selected, animated: false)
                 if cell.dequeID != listed.wrapped?.dequeID {
@@ -189,6 +190,8 @@ extension Composition {
                 }
                 if let separator, separator.includingLast || source.separatable(for: indexPath) {
                     listed.insert(separator: separator.view, in: cell)
+                } else {
+                    listed.pin(bottom: cell)
                 }
                 return listed
             case .custom:
@@ -212,6 +215,7 @@ extension Composition {
             guard let boundary = source.header(for: section),
                   let listed = lastDequedBoundary ?? tableView.dequeue(boundary)
             else { return nil }
+            lastDequedBoundary = nil
             listed.delegate = self
             listed.section = section
             if boundary.dequeID != listed.wrapped?.dequeID {
@@ -250,7 +254,9 @@ extension Composition {
                 let height = layout.height(for: item, in: section)
                 guard height != UITableView.automaticDimension else { return height }
                 let _separator: CGFloat = {
-                    guard let separator = separator, source.separatable(for: indexPath) else { return .zero }
+                    guard let separator = separator, separator.includingLast || source.separatable(for: indexPath) else {
+                        return .zero
+                    }
                     return separator.height
                 }()
                 return height+(_separator)
@@ -273,7 +279,9 @@ extension Composition {
                 let height = layout.height(for: item, in: section)
                 guard height != UITableView.automaticDimension else { return height }
                 let _separator: CGFloat = {
-                    guard let separator = separator, source.separatable(for: indexPath) else { return .zero }
+                    guard let separator = separator, separator.includingLast || source.separatable(for: indexPath) else {
+                        return .zero
+                    }
                     return separator.height
                 }()
                 return height+(_separator)
@@ -332,7 +340,9 @@ extension Composition {
                   let item = source.item(for: indexPath),
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
-            layout.calculated(height: cell.bounds.height, for: item, in: section)
+            if !source.snapshot.updating {
+                layout.calculated(height: cell.bounds.height, for: item, in: section)
+            }
             end(display: cell, with: item, in: section, for: indexPath)
         }
         public final func tableView(
@@ -698,6 +708,7 @@ extension Composition {
                 guard let wrapped = wrapper.wrapped as? Cell.Wrapper<Section, Item> else {
                     let wrapped = Cell.Wrapper<Section, Item>()
                     wrapper.wrap(cell: wrapped)
+                    wrapper.pin(bottom: wrapped)
                     return wrapped
                 }
                 return wrapped

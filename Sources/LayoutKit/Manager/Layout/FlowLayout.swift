@@ -85,7 +85,7 @@ internal final class FlowLayout<Section: Hashable, Item: Hashable>: UICollection
         }
         let padding: CGFloat = {
             guard let indexPath = collectionView.indexPathForItem(at: CGPoint(x: bestCandidateOffset, y: collectionView.frame.height/2)),
-                  let width = collectionView.cellForItem(at: indexPath)?.bounds.size.width
+                  let width = grid?.collectionView(collectionView, layout: self, sizeForItemAt: indexPath).width
             else { return .zero }
             return max(0, (collectionView.frame.width-width)/2)
         }()
