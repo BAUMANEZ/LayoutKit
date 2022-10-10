@@ -341,7 +341,7 @@ extension Composition {
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
             if !source.snapshot.updating {
-                layout.calculated(height: cell.bounds.height, for: item, in: section)
+//                layout.calculated(height: cell.bounds.height, for: item, in: section)
             }
             end(display: cell, with: item, in: section, for: indexPath)
         }

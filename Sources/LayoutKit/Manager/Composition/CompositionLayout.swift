@@ -207,7 +207,9 @@ extension Composition {
         
         internal func calculated(height: CGFloat, for item: Item, in section: Section) {
             let key = Cache.Item.Fields.Key(width: frame.width)
-            cache.store(height: height, for: key, with: item, in: section)
+            if cache.height(for: key, with: item, in: section) == nil {
+                cache.store(height: height, for: key, with: item, in: section)                
+            }
         }
         internal func reload(item: Item, in section: Section) {
             cache.remove(item: item, in: section)

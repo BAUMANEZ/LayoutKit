@@ -68,8 +68,10 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
         let insets = insets
         let top = content.topAnchor.constraint(equalTo: topAnchor, constant: insets.top)
         top.priority = .defaultHigh; top.isActive = true
-        content.leftAnchor.constraint(equalTo: leftAnchor, constant: insets.left).isActive = true
-        content.rightAnchor.constraint(equalTo: rightAnchor, constant: -insets.right).isActive = true
+        let left = content.leftAnchor.constraint(equalTo: leftAnchor, constant: insets.left)
+        left.priority = .defaultHigh; left.isActive = true
+        let right = content.rightAnchor.constraint(equalTo: rightAnchor, constant: -insets.right)
+        right.priority = .defaultHigh; right.isActive = true
         let bottom = content.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -insets.bottom);
         bottom.priority = .defaultHigh; bottom.isActive = true
     }
