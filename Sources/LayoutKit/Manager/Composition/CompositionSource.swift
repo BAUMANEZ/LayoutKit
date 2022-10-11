@@ -161,12 +161,18 @@ extension Composition.Source {
         fileprivate var sections: OrderedSet<Section> = []
         fileprivate var items: [Section: OrderedSet<Item>] = [:]
         
+        internal private(set) var updating = false
+        
         fileprivate init(source: Composition.Source<Section, Item>) {
             self.source = source
         }
         
         public func batch(updates: [Update], animation: UITableView.RowAnimation?) {
+            defer {
+                updating = false
+            }
             guard let list = source?.manager?.view else { return }
+            updating = true
             for update in updates {
                 var dSections: IndexSet?
                 var iSections: IndexSet?
@@ -203,8 +209,8 @@ extension Composition.Source {
                     self.add(items: items, to: section) { insert in
                         iItems = insert
                     }
-                case .refresh:
-                    self.refresh()
+                case .refreshSections(let sections):
+                    self.refresh(sections: sections)
                     list.beginUpdates()
                     list.endUpdates()
                     continue
@@ -239,19 +245,14 @@ extension Composition.Source {
             source?.offsets.removeAll()
             source?.selected.removeAll()
             source?.wrappers.removeAll()
+            self.sections.indices.forEach { source?.manager?.grid(for: $0)?.clear() }
             self.items.removeAll()
             let delete = IndexSet(self.sections.indices)
             let insert = IndexSet(sections.indices)
-            let grids = self.sections.enumerated().compactMap { index, section in
-                return ((source?.manager?.view.cellForRow(at: IndexPath(item: 0, section: index)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view
-            }
             self.sections = sections
             sections.enumerated().forEach { index, updated in
                 guard let items = items?(updated), items.count > 0 else { return }
                 self.items[updated] = items
-            }
-            grids.forEach { grid in
-                grid.performBatchUpdates{ grid.deleteItems(at: (0..<grid.numberOfItems(inSection: 0)).map{IndexPath(item: $0, section: 0)} )}
             }
             completion(delete, insert)
         }
@@ -286,19 +287,14 @@ extension Composition.Source {
                 items[$0]?.forEach{ item in source?.selected.remove(item)}
                 source?.wrappers.removeValue(forKey: $0)
             }
+            sections.indices.forEach { source?.manager?.grid(for: $0)?.clear() }
             let pairs = sections.reduce(into: [Pair]()) {
                 guard let index = self.sections.firstIndex(of: $1) else { return () }
                 $0.append(Pair(index: index, section: $1))
             }
             let delete = IndexSet(Set(pairs.map{$0.index}))
-            let grids = pairs.compactMap { index, section in
-                return ((source?.manager?.view.cellForRow(at: IndexPath(item: 0, section: index)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view
-            }
             self.sections = self.sections.subtracting(sections)
             sections.forEach{ self.items.removeValue(forKey: $0) }
-            grids.forEach { grid in
-                grid.performBatchUpdates{ grid.deleteItems(at: (0..<grid.numberOfItems(inSection: 0)).map{IndexPath(item: $0, section: 0)} )}
-            }
             completion(delete)
         }
         
@@ -355,8 +351,8 @@ extension Composition.Source {
             }
         }
         
-        private func refresh() {
-            source?.manager?.layout.removeAll()
+        private func refresh(sections: OrderedSet<Section>) {
+            source?.manager?.layout.remove(sections: sections)
         }
         
         public enum Update {
@@ -369,7 +365,7 @@ extension Composition.Source {
             case setItems(OrderedSet<Item>, to: Section)
             case appendItems(OrderedSet<Item>, to: Section)
             
-            case refresh
+            case refreshSections(OrderedSet<Section>)
         }
     }
 }

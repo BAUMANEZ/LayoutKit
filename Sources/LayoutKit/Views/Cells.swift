@@ -106,11 +106,12 @@ extension Cell {
         internal private(set) var wrapped: Cell?
         internal private(set) var separator: UIView?
         
-        private var bottom: NSLayoutConstraint?
-                
+        private var bottom = NSLayoutConstraint()
+                        
         override func prepareForReuse() {
             super.prepareForReuse()
             wrapped?.prepareForReuse()
+            bottom.constant = 0
             separator?.removeFromSuperview()
             separator = nil
         }
@@ -138,7 +139,6 @@ extension Cell {
         }
         
         internal func wrap(cell: Cell) {
-            bottom?.isActive = false
             self.wrapped?.wrapper = nil
             self.wrapped?.removeFromSuperview()
             self.wrapped = cell
@@ -148,18 +148,18 @@ extension Cell {
             cell.topAnchor.constraint(equalTo: contentView.topAnchor).isActive = true
             cell.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             cell.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
-            bottom = cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor); bottom?.isActive = true
+            bottom = cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor);
+            bottom.priority = .defaultHigh; bottom.isActive = true
         }
-        internal func insert(separator: UIView, in cell: Cell) {
-            bottom?.isActive = false
-            bottom = nil
+        internal func insert(separator: UIView, height: CGFloat) {
+            guard wrapped != nil else { return }
             self.separator = separator
             separator.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(separator)
-            separator.topAnchor.constraint(equalTo: cell.bottomAnchor).isActive = true
             separator.leftAnchor.constraint(equalTo: contentView.leftAnchor).isActive = true
             separator.rightAnchor.constraint(equalTo: contentView.rightAnchor).isActive = true
             separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor).isActive = true
+            bottom.constant = -height
         }
         
         override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {

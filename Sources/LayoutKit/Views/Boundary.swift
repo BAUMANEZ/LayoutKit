@@ -85,7 +85,7 @@ extension Boundary {
     internal final class Listed: UITableViewHeaderFooterView {
         internal var wrapped: Boundary?
         internal weak var delegate: BoundaryDelegate?
-        private var section: Int?
+        internal var section: Int?
         private var isHeader = true
         
         override var canBecomeFocused: Bool {
@@ -103,23 +103,25 @@ extension Boundary {
         
         internal override func prepareForReuse() {
             super.prepareForReuse()
-            section = nil
             delegate = nil
             wrapped?.prepareForReuse()
         }
         
-        internal func wrap(boundary: Boundary, in section: Int, isHeader: Bool) {
+        internal func wrap(boundary: Boundary, isHeader: Bool) {
             self.isHeader = isHeader
-            self.section = section
             wrapped?.removeFromSuperview()
             wrapped = boundary
             boundary.translatesAutoresizingMaskIntoConstraints = false
             addSubview(boundary)
             
-            boundary.topAnchor.constraint(equalTo: topAnchor).isActive = true
-            boundary.leftAnchor.constraint(equalTo: leftAnchor).isActive = true
-            boundary.rightAnchor.constraint(equalTo: rightAnchor).isActive = true
-            boundary.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+            let top = boundary.topAnchor.constraint(equalTo: topAnchor);
+            top.priority = .defaultHigh; top.isActive = true
+            let left = boundary.leftAnchor.constraint(equalTo: leftAnchor);
+            left.priority = .defaultHigh; left.isActive = true
+            let right = boundary.rightAnchor.constraint(equalTo: rightAnchor);
+            right.priority = .defaultHigh; right.isActive = true
+            let bottom = boundary.bottomAnchor.constraint(equalTo: bottomAnchor);
+            bottom.priority = .defaultHigh; bottom.isActive = true
         }
         
         public override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {

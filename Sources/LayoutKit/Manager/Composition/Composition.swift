@@ -182,13 +182,14 @@ extension Composition {
                 guard let cell = source.cell(for: indexPath) as? Cell,
                       let listed = lastDequedCell ?? tableView.dequeue(cell: cell, for: indexPath)
                 else { return UITableViewCell()  }
+                lastDequedCell = nil
                 cell.selected = source.selected(indexPath: indexPath)
                 cell.set(selected: cell.selected, animated: false)
                 if cell.dequeID != listed.wrapped?.dequeID {
                     listed.wrap(cell: cell)
                 }
-                if source.separatable(for: indexPath), let separator = separator?.view {
-                    listed.insert(separator: separator, in: cell)
+                if let separator, separator.includingLast || source.separatable(for: indexPath) {
+                    listed.insert(separator: separator.view, height: separator.height)
                 }
                 return listed
             case .custom:
@@ -212,9 +213,11 @@ extension Composition {
             guard let boundary = source.header(for: section),
                   let listed = lastDequedBoundary ?? tableView.dequeue(boundary)
             else { return nil }
+            lastDequedBoundary = nil
             listed.delegate = self
+            listed.section = section
             if boundary.dequeID != listed.wrapped?.dequeID {
-                listed.wrap(boundary: boundary, in: section, isHeader: true)                
+                listed.wrap(boundary: boundary, isHeader: true)
             }
             return listed
         }
@@ -226,7 +229,10 @@ extension Composition {
                   let listed = tableView.dequeue(boundary)
             else { return nil }
             listed.delegate = self
-            listed.wrap(boundary: boundary, in: section, isHeader: false)
+            listed.section = section
+            if boundary.dequeID != listed.wrapped?.dequeID {
+                listed.wrap(boundary: boundary, isHeader: false)
+            }
             return listed
         }
         
@@ -246,7 +252,9 @@ extension Composition {
                 let height = layout.height(for: item, in: section)
                 guard height != UITableView.automaticDimension else { return height }
                 let _separator: CGFloat = {
-                    guard let separator = separator, source.separatable(for: indexPath) else { return .zero }
+                    guard let separator = separator, separator.includingLast || source.separatable(for: indexPath) else {
+                        return .zero
+                    }
                     return separator.height
                 }()
                 return height+(_separator)
@@ -269,7 +277,9 @@ extension Composition {
                 let height = layout.height(for: item, in: section)
                 guard height != UITableView.automaticDimension else { return height }
                 let _separator: CGFloat = {
-                    guard let separator = separator, source.separatable(for: indexPath) else { return .zero }
+                    guard let separator = separator, separator.includingLast || source.separatable(for: indexPath) else {
+                        return .zero
+                    }
                     return separator.height
                 }()
                 return height+(_separator)
@@ -316,7 +326,7 @@ extension Composition {
                   let item = source.item(for: indexPath),
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
-            (cell as? Cell.Wrapper<Section, Item>)?.grid?.view.setContentOffset(source.offset(in: section) ?? .zero, animated: false)
+            (cell as? Cell.Wrapper<Section, Item>)?.grid?.restore()
             will(display: cell, with: item, in: section, for: indexPath)
         }
         public final func tableView(
@@ -328,7 +338,9 @@ extension Composition {
                   let item = source.item(for: indexPath),
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
-            layout.calculated(height: cell.bounds.height, for: item, in: section)
+            if !source.snapshot.updating {
+                layout.calculated(height: cell.bounds.height, for: item, in: section)
+            }
             end(display: cell, with: item, in: section, for: indexPath)
         }
         public final func tableView(
@@ -620,7 +632,7 @@ extension Composition {
         /// - behaviour provider: define logic of particular section
         public final func set(layout provider: Layout.Provider?, animated: Bool) {
             layout.provider = provider
-            source.snapshot.batch(updates: [.refresh], animation: animated ? .fade : nil)
+            source.snapshot.batch(updates: [.refreshSections(source.sections)], animation: animated ? .fade : nil)
         }
         public final func set(source provider: Source.Provider?, animated: Bool) {
             source.provider = provider
@@ -918,7 +930,7 @@ extension Composition.Manager {
         guard !source.selected(item: item) else { return }
         if !behaviour.multiselection(section: section) {
             source.items(for: section).enumerated().filter{ source.selected(item: $0.element) }.forEach {
-                source.set(item: item, selected: false)
+                source.set(item: $0.element, selected: false)
                 set(item: $0.element, _item: $0.offset, section: section, _section: indexPath.section, style: style, selected: false, programatically: true)
             }
         }
@@ -967,7 +979,7 @@ extension Composition.Manager {
             case .infinite:
                 guard let grid = grid(for: _section)?.grid else { return }
                 for __item in grid.stride(for: _item) {
-                    guard let cell = grid.cell(for: __item) else { return }
+                    guard let cell = grid.cell(for: __item) else { continue }
                     grid.set(selected: selected, item: __item)
                     set(cell: cell, selected: selected, completion: completion)
                     if !programatically {

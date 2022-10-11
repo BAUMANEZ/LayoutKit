@@ -207,7 +207,9 @@ extension Composition {
         
         internal func calculated(height: CGFloat, for item: Item, in section: Section) {
             let key = Cache.Item.Fields.Key(width: frame.width)
-            cache.store(height: height, for: key, with: item, in: section)
+            if cache.height(for: key, with: item, in: section) == nil {
+                cache.store(height: height, for: key, with: item, in: section)                
+            }
         }
         internal func reload(item: Item, in section: Section) {
             cache.remove(item: item, in: section)
@@ -288,17 +290,24 @@ extension Composition.Layout {
             }
         }
         public enum Separator {
-            case spacer(CGFloat)
-            case line(color: UIColor, thickness: CGFloat, insets: UIEdgeInsets)
-            case custom(UIView, thickness: CGFloat, insets: UIEdgeInsets)
+            case spacer(CGFloat, includingLast: Bool = false)
+            case line(color: UIColor, thickness: CGFloat, insets: UIEdgeInsets, includingLast: Bool = false)
+            case custom(UIView, thickness: CGFloat, insets: UIEdgeInsets, includingLast: Bool = false)
+            
+            public var includingLast: Bool {
+                switch self {
+                case .spacer(_, let flag), .line(_, _, _, let flag), .custom(_, _, _, let flag):
+                    return flag
+                }
+            }
             
             public var height: CGFloat {
                 switch self {
-                case .spacer(let space):
+                case .spacer(let space, _):
                     return space
-                case .line(_, let thickness, let insets):
+                case .line(_, let thickness, let insets, _):
                     return thickness+insets.top+insets.bottom
-                case .custom(_, let thickness, let insets):
+                case .custom(_, let thickness, let insets, _):
                     return thickness+insets.top+insets.bottom
                 }
             }
@@ -308,15 +317,15 @@ extension Composition.Layout {
                 let height: CGFloat
                 let insets: UIEdgeInsets
                 switch self {
-                case .spacer(let space):
+                case .spacer(let space, _):
                     view = UIView()
                     height = space
                     insets = .zero
-                case .line(let color, let thickness, let _insets):
+                case .line(let color, let thickness, let _insets, _):
                     view = UIView(); view.backgroundColor = color
                     height = thickness
                     insets = _insets
-                case .custom(let _view, let thickness, let _insets):
+                case .custom(let _view, let thickness, let _insets, _):
                     view = _view
                     height = thickness
                     insets = _insets
