@@ -15,9 +15,8 @@ extension Grid {
         internal final let view: UICollectionView
         internal final let _section: Int
         internal final weak var parent: Parent
-        internal final weak var pager: Pager?
                 
-        internal final let multiplier = 1000
+        internal final let multiplier = 400
         internal final var mod: Int {
             guard let parent, let section = parent.source.section(for: _section) else { return 1 }
             return max(1, parent.source.items(for: section).count)
@@ -45,7 +44,6 @@ extension Grid {
             register()
             view.delegate = self
             view.dataSource = self
-            
             view.clipsToBounds = false
             view.backgroundColor = .clear
             view.insetsLayoutMarginsFromSafeArea = false
@@ -89,6 +87,41 @@ extension Grid {
             view.leftAnchor.constraint(equalTo: content.leftAnchor).isActive = true
             view.rightAnchor.constraint(equalTo: content.rightAnchor).isActive = true
             view.bottomAnchor.constraint(equalTo: content.bottomAnchor).isActive = true
+        }
+        internal func restore() {
+            guard let parent,
+                  let section = parent.source.section(for: _section),
+                  let style = parent.layout.style(for: section)
+            else { return }
+            switch style {
+            case .horizontal(_, _, let rows, _):
+                switch rows {
+                case .infinite(let scrolling):
+                    switch scrolling {
+                    case .automatic:
+                        guard let offset = parent.source.offset(in: section) else {
+                            infiniteScroll(page: 0, count: parent.source.items(for: section).count, animated: false)
+                            break
+                        }
+                        view.setContentOffset(offset, animated: false)
+                    case .centerted:
+                        let page = parent.source.page(in: section) ?? 0
+                        infiniteScroll(page: page,count: parent.source.items(for: section).count, animated: false)
+                    }
+                    break
+                case .finite(_, let scrolling):
+                    switch scrolling {
+                    case .automatic:
+                        guard let offset = parent.source.offset(in: section) else { break }
+                        view.setContentOffset(offset, animated: false)
+                    case .centerted:
+                        guard let page = parent.source.page(in: section) else { break }
+                        scroll(to: page, at: .centeredHorizontally, animated: false)
+                    }
+                }
+            default:
+                break
+            }
         }
         
         internal final func stride(for item: Int) -> StrideTo<Int> {
@@ -345,12 +378,26 @@ extension Grid {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
-            parent.source.save(offset: scrollView.contentOffset, in: section)
-            if pager != nil,
-               let center = view.indexPathForItem(
-                at: CGPoint(x: view.frame.midX+view.contentOffset.x, y: view.frame.midY/2)
-            ){
-                parent.source.save(page: center.item, in: section)
+            switch parent.layout.style(for: section) {
+            case .grid:
+                parent.source.save(offset: scrollView.contentOffset, in: section)
+            case .horizontal(_, _, let rows, _):
+                switch rows {
+                case .finite(_, let scrolling), .infinite(let scrolling):
+                    parent.source.save(offset: scrollView.contentOffset, in: section)
+                    switch scrolling {
+                    case .centerted:
+                        if let center = view.indexPathForItem(
+                            at: CGPoint(x: view.frame.width/2+view.contentOffset.x, y: view.frame.height/2)
+                        ) {
+                            parent.source.save(page: center.item%mod, in: section)
+                        }
+                    case .automatic:
+                        break
+                    }
+                }
+            default:
+                break
             }
             parent.scrolled()
         }
@@ -450,6 +497,11 @@ extension Grid {
     }
 }
 
+extension Grid.Manager {
+    private func infiniteScroll(page: Int, count: Int, animated: Bool) {
+        view.scrollToItem(at: IndexPath(item: page+count*multiplier/2, section: 0), at: .centeredHorizontally, animated: animated)
+    }
+}
 extension Grid.Manager {
     internal final  func cell(for item: Int) -> Cell? {
         return (view.cellForItem(at: IndexPath(item: item, section: 0)) as? Cell.Grided)?.wrapped

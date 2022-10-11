@@ -209,8 +209,8 @@ extension Composition.Source {
                     self.add(items: items, to: section) { insert in
                         iItems = insert
                     }
-                case .refresh:
-                    self.refresh()
+                case .refreshSections(let sections):
+                    self.refresh(sections: sections)
                     list.beginUpdates()
                     list.endUpdates()
                     continue
@@ -351,8 +351,8 @@ extension Composition.Source {
             }
         }
         
-        private func refresh() {
-            source?.manager?.layout.removeAll()
+        private func refresh(sections: OrderedSet<Section>) {
+            source?.manager?.layout.remove(sections: sections)
         }
         
         public enum Update {
@@ -365,7 +365,7 @@ extension Composition.Source {
             case setItems(OrderedSet<Item>, to: Section)
             case appendItems(OrderedSet<Item>, to: Section)
             
-            case refresh
+            case refreshSections(OrderedSet<Section>)
         }
     }
 }

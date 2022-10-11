@@ -189,9 +189,7 @@ extension Composition {
                     listed.wrap(cell: cell)
                 }
                 if let separator, separator.includingLast || source.separatable(for: indexPath) {
-                    listed.insert(separator: separator.view, in: cell)
-                } else {
-                    listed.pin(bottom: cell)
+                    listed.insert(separator: separator.view, height: separator.height)
                 }
                 return listed
             case .custom:
@@ -328,7 +326,7 @@ extension Composition {
                   let item = source.item(for: indexPath),
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
-            (cell as? Cell.Wrapper<Section, Item>)?.grid?.view.setContentOffset(source.offset(in: section) ?? .zero, animated: false)
+            (cell as? Cell.Wrapper<Section, Item>)?.grid?.restore()
             will(display: cell, with: item, in: section, for: indexPath)
         }
         public final func tableView(
@@ -341,7 +339,7 @@ extension Composition {
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
             if !source.snapshot.updating {
-//                layout.calculated(height: cell.bounds.height, for: item, in: section)
+                layout.calculated(height: cell.bounds.height, for: item, in: section)
             }
             end(display: cell, with: item, in: section, for: indexPath)
         }
@@ -634,7 +632,7 @@ extension Composition {
         /// - behaviour provider: define logic of particular section
         public final func set(layout provider: Layout.Provider?, animated: Bool) {
             layout.provider = provider
-            source.snapshot.batch(updates: [.refresh], animation: animated ? .fade : nil)
+            source.snapshot.batch(updates: [.refreshSections(source.sections)], animation: animated ? .fade : nil)
         }
         public final func set(source provider: Source.Provider?, animated: Bool) {
             source.provider = provider
@@ -708,7 +706,6 @@ extension Composition {
                 guard let wrapped = wrapper.wrapped as? Cell.Wrapper<Section, Item> else {
                     let wrapped = Cell.Wrapper<Section, Item>()
                     wrapper.wrap(cell: wrapped)
-                    wrapper.pin(bottom: wrapped)
                     return wrapped
                 }
                 return wrapped
@@ -982,7 +979,7 @@ extension Composition.Manager {
             case .infinite:
                 guard let grid = grid(for: _section)?.grid else { return }
                 for __item in grid.stride(for: _item) {
-                    guard let cell = grid.cell(for: __item) else { return }
+                    guard let cell = grid.cell(for: __item) else { continue }
                     grid.set(selected: selected, item: __item)
                     set(cell: cell, selected: selected, completion: completion)
                     if !programatically {

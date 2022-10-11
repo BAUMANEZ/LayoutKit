@@ -66,14 +66,10 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
         addSubview(content)
         
         let insets = insets
-        let top = content.topAnchor.constraint(equalTo: topAnchor, constant: insets.top)
-        top.priority = .defaultHigh; top.isActive = true
-        let left = content.leftAnchor.constraint(equalTo: leftAnchor, constant: insets.left)
-        left.priority = .defaultHigh; left.isActive = true
-        let right = content.rightAnchor.constraint(equalTo: rightAnchor, constant: -insets.right)
-        right.priority = .defaultHigh; right.isActive = true
-        let bottom = content.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -insets.bottom);
-        bottom.priority = .defaultHigh; bottom.isActive = true
+        content.topAnchor.constraint(equalTo: topAnchor, constant: insets.top).isActive = true
+        content.leftAnchor.constraint(equalTo: leftAnchor, constant: insets.left).isActive = true
+        content.rightAnchor.constraint(equalTo: rightAnchor, constant: -insets.right).isActive = true
+        content.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -insets.bottom).isActive = true
     }
     
     open func selected() {}
@@ -118,10 +114,14 @@ extension Boundary {
             boundary.translatesAutoresizingMaskIntoConstraints = false
             addSubview(boundary)
             
-            boundary.topAnchor.constraint(equalTo: topAnchor).isActive = true
-            boundary.leftAnchor.constraint(equalTo: leftAnchor).isActive = true
-            boundary.rightAnchor.constraint(equalTo: rightAnchor).isActive = true
-            boundary.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+            let top = boundary.topAnchor.constraint(equalTo: topAnchor);
+            top.priority = .defaultHigh; top.isActive = true
+            let left = boundary.leftAnchor.constraint(equalTo: leftAnchor);
+            left.priority = .defaultHigh; left.isActive = true
+            let right = boundary.rightAnchor.constraint(equalTo: rightAnchor);
+            right.priority = .defaultHigh; right.isActive = true
+            let bottom = boundary.bottomAnchor.constraint(equalTo: bottomAnchor);
+            bottom.priority = .defaultHigh; bottom.isActive = true
         }
         
         public override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
