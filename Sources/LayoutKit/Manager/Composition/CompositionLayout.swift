@@ -17,6 +17,7 @@ extension Composition {
         internal var provider: Provider?
         
         private let cache = Cache()
+        internal var visible: Set<Section> = []
         
         private var frame: CGSize {
             return manager?.view.frame.size ?? .zero
@@ -218,12 +219,15 @@ extension Composition {
             cache.remove(items: items, in: section)
         }
         internal func remove(section: Section) {
+            visible.remove(section)
             cache.remove(section: section)
         }
         internal func remove(sections: OrderedSet<Section>) {
+            sections.forEach{ visible.remove($0) }
             cache.remove(sections: sections)
         }
         internal func removeAll() {
+            visible.removeAll()
             cache.removeAll()
         }
         

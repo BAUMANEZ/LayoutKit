@@ -28,6 +28,9 @@ public protocol CompositionDelegate: AnyObject {
     func focused(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath, with context: FocusUpdateContext, using coordinator: UIFocusAnimationCoordinator)
     func focusable(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) -> Bool
  
+    func will(display section: Section, at index: Int)
+    func end(display section: Section, at index: Int)
+    
     func will(display header: Boundary, above section: Section, at index: Int)
     func did(display header: Boundary, above section: Section, at index: Int)
     func will(display footer: Boundary, below section: Section, at index: Int)
@@ -323,11 +326,27 @@ extension Composition {
             forRowAt indexPath: IndexPath
         ) {
             guard let section = source.section(for: indexPath.section),
+                  let style = layout.style(for: section),
                   let item = source.item(for: indexPath),
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
-            (cell as? Cell.Wrapper<Section, Item>)?.grid?.restore()
-            will(display: cell, with: item, in: section, for: indexPath)
+            switch style {
+            case .vertical, .custom:
+                if !layout.visible.contains(section) {
+                    layout.visible.insert(section)
+                    will(display: section, at: indexPath.section)
+                }
+                will(display: cell, with: item, in: section, for: indexPath)
+            case .grid, .horizontal:
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    (cell as? Cell.Wrapper<Section, Item>)?.grid?.restore()
+                    if !self.layout.visible.contains(section) {
+                        self.layout.visible.insert(section)
+                        self.will(display: section, at: indexPath.section)
+                    }
+                }
+            }
         }
         public final func tableView(
             _ tableView: UITableView,
@@ -335,13 +354,20 @@ extension Composition {
             forRowAt indexPath: IndexPath
         ) {
             guard let section = source.section(for: indexPath.section),
+                  let style = layout.style(for: section),
                   let item = source.item(for: indexPath),
                   let cell = (cell as? Cell.Listed)?.wrapped
             else { return }
-            if !source.snapshot.updating {
-                layout.calculated(height: cell.bounds.height, for: item, in: section)
+            switch style {
+            case .vertical, .custom:
+                if !source.snapshot.updating {
+                    layout.calculated(height: cell.bounds.height, for: item, in: section)
+                }
+                end(display: cell, with: item, in: section, for: indexPath)
+            case .grid, .horizontal:
+                layout.visible.remove(section)
+                end(display: section, at: indexPath.section)
             }
-            end(display: cell, with: item, in: section, for: indexPath)
         }
         public final func tableView(
             _ tableView: UITableView,
@@ -572,6 +598,9 @@ extension Composition {
         open func deselected(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) { cell.set(selected: false, animated: true) }
         open func didSelect(multiple item: Item, in section: Section, for indexPath: IndexPath) {}
         open func endSelectMultiple(in list: UITableView) {}
+        
+        open func will(display section: Section, at index: Int) {}
+        open func end(display section: Section, at index: Int) {}
          
         open func will(display header: Boundary, above section: Section, at index: Int) {}
         open func did(display header: Boundary, above section: Section, at index: Int) {}

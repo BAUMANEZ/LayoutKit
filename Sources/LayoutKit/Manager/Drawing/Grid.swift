@@ -16,7 +16,7 @@ extension Grid {
         internal final let _section: Int
         internal final weak var parent: Parent
                 
-        internal final let multiplier = 400
+        internal final let multiplier = 200
         internal final var mod: Int {
             guard let parent, let section = parent.source.section(for: _section) else { return 1 }
             return max(1, parent.source.items(for: section).count)
@@ -100,13 +100,13 @@ extension Grid {
                     switch scrolling {
                     case .automatic:
                         guard let offset = parent.source.offset(in: section) else {
-                            infiniteScroll(page: 0, count: parent.source.items(for: section).count, animated: false)
+                            infiniteScroll(item: 0, count: parent.source.items(for: section).count, animated: false)
                             break
                         }
                         view.setContentOffset(offset, animated: false)
                     case .centerted:
                         let page = parent.source.page(in: section) ?? 0
-                        infiniteScroll(page: page,count: parent.source.items(for: section).count, animated: false)
+                        infiniteScroll(item: page, count: parent.source.items(for: section).count, animated: false)
                     }
                     break
                 case .finite(_, let scrolling):
@@ -498,8 +498,8 @@ extension Grid {
 }
 
 extension Grid.Manager {
-    private func infiniteScroll(page: Int, count: Int, animated: Bool) {
-        view.scrollToItem(at: IndexPath(item: page+count*multiplier/2, section: 0), at: .centeredHorizontally, animated: animated)
+    private func infiniteScroll(item: Int, count: Int, animated: Bool) {
+        view.scrollToItem(at: IndexPath(item: item+count*multiplier/2, section: 0), at: .centeredHorizontally, animated: animated)
     }
 }
 extension Grid.Manager {
@@ -514,7 +514,23 @@ extension Grid.Manager {
         selected ? view.selectItem(at: indexPath, animated: animated, scrollPosition: []) : view.deselectItem(at: indexPath, animated: animated)
     }
     internal final func scroll(to item: Int, at position: UICollectionView.ScrollPosition, animated: Bool) {
-        view.scrollToItem(at: IndexPath(item: item, section: 0), at: position, animated: animated)
+        guard let parent,
+              let section = parent.source.section(for: _section),
+              let style = parent.layout.style(for: section)
+        else { return }
+        switch style {
+        case .grid:
+            view.scrollToItem(at: IndexPath(item: item, section: 0), at: position, animated: animated)
+        case .horizontal(_, _, let rows, _):
+            switch rows {
+            case .finite:
+                view.scrollToItem(at: IndexPath(item: item, section: 0), at: position, animated: animated)
+            case .infinite:
+                infiniteScroll(item: item, count: parent.source.items(for: section).count, animated: animated)
+            }
+        default:
+            return
+        }
     }
     internal final func dequeue<T: Cell>(
         cell: T.Type,
