@@ -115,9 +115,9 @@ extension Boundary {
             addSubview(boundary)
             
             let top = boundary.topAnchor.constraint(equalTo: topAnchor);
-            top.priority = .defaultHigh; top.isActive = true
+            top.priority = .required; top.isActive = true
             let left = boundary.leftAnchor.constraint(equalTo: leftAnchor);
-            left.priority = .defaultHigh; left.isActive = true
+            left.priority = .required; left.isActive = true
             let right = boundary.rightAnchor.constraint(equalTo: rightAnchor);
             right.priority = .defaultHigh; right.isActive = true
             let bottom = boundary.bottomAnchor.constraint(equalTo: bottomAnchor);
