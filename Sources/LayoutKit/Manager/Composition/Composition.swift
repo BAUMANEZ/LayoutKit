@@ -112,6 +112,7 @@ extension Composition {
         
         private func setup(in content: UIView) {
             view.register(Cell.self)
+            view.register(Cell.Wrapper<Section, Item>.self)
             register()
             view.delegate = self
             view.dataSource = self
@@ -752,15 +753,7 @@ extension Composition {
         }
         private func wrapper(section: Section, for index: Int) -> Cell.Listed?  {
             let type = Cell.Wrapper<Section, Item>.self
-            let wrapper: Cell.Listed? = {
-                guard let template = source.identifier(for: section) else {
-                    let template = String(describing: type)
-                    source.set(identifier: template, for: section)
-                    view.register(type, template: template)
-                    return view.dequeue(wrapper: type, for: IndexPath(item: 0, section: index), with: template)
-                }
-                return view.dequeue(wrapper: type, for: IndexPath(item: 0, section: index), with: template)
-            }()
+            let wrapper: Cell.Listed? = view.dequeue(wrapper: type, for: IndexPath(item: 0, section: index))
             guard let wrapper else { return nil }
             let wrapped: Cell.Wrapper<Section, Item> = {
                 guard let wrapped = wrapper.wrapped as? Cell.Wrapper<Section, Item> else {
