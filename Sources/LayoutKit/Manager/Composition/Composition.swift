@@ -32,9 +32,9 @@ public protocol CompositionDelegate: AnyObject {
     func end(display section: Section, at index: Int)
     
     func will(display header: Boundary, above section: Section, at index: Int)
-    func did(display header: Boundary, above section: Section, at index: Int)
+    func end(display header: Boundary, above section: Section, at index: Int)
     func will(display footer: Boundary, below section: Section, at index: Int)
-    func did(display footer: Boundary, below section: Section, at index: Int)
+    func end(display footer: Boundary, below section: Section, at index: Int)
     func selectable(header: Boundary, in section: Section, at index: Int) -> Bool
     func selectable(footer: Boundary, in section: Section, at index: Int) -> Bool
     func selected(header: Boundary, in section: Section, at index: Int)
@@ -50,7 +50,12 @@ public protocol CompositionDelegate: AnyObject {
     func focused(header: Boundary, in section: Section, at index: Int)
     func focused(footer: Boundary, in section: Section, at index: Int)
     
+    func willScroll()
     func scrolled()
+    func willStopScroll(with velocity: CGPoint, target offset: UnsafeMutablePointer<CGPoint>)
+    func endScroll(decelerating: Bool)
+    func willDecelerate()
+    func stop()
 }
 
 extension Composition {
@@ -332,8 +337,8 @@ extension Composition {
             else { return }
             switch style {
             case .vertical, .custom:
-                if !layout.visible.contains(section) {
-                    layout.visible.insert(section)
+                if !layout.visible(section: section) {
+                    layout.set(section: section, visible: true)
                     will(display: section, at: indexPath.section)
                 }
                 will(display: cell, with: item, in: section, for: indexPath)
@@ -341,8 +346,8 @@ extension Composition {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     (cell as? Cell.Wrapper<Section, Item>)?.grid?.restore()
-                    if !self.layout.visible.contains(section) {
-                        self.layout.visible.insert(section)
+                    if !self.layout.visible(section: section) {
+                        self.layout.set(section: section, visible: true)
                         self.will(display: section, at: indexPath.section)
                     }
                 }
@@ -365,7 +370,7 @@ extension Composition {
                 }
                 end(display: cell, with: item, in: section, for: indexPath)
             case .grid, .horizontal:
-                layout.visible.remove(section)
+                layout.set(section: section, visible: false)
                 end(display: section, at: indexPath.section)
             }
         }
@@ -413,7 +418,7 @@ extension Composition {
             forSection section: Int
         ) {
             guard let _section = source.section(for: section),
-                  let view = view as? Boundary
+                  let view = (view as? Boundary.Listed)?.wrapped
             else { return }
             will(display: view, above: _section, at: section)
         }
@@ -423,9 +428,12 @@ extension Composition {
             forSection section: Int
         ) {
             guard let _section = source.section(for: section),
-                  let view = view as? Boundary
+                  let view = (view as? Boundary.Listed)?.wrapped
             else { return }
-            did(display: view, above: _section, at: section)
+            if !source.snapshot.updating {
+                layout.calculated(header: view.bounds.height, in: _section)
+            }
+            end(display: view, above: _section, at: section)
         }
         public final func tableView(
             _ tableView: UITableView,
@@ -433,7 +441,7 @@ extension Composition {
             forSection section: Int
         ) {
             guard let _section = source.section(for: section),
-                  let view = view as? Boundary
+                  let view = (view as? Boundary.Listed)?.wrapped
             else { return }
             will(display: view, below: _section, at: section)
         }
@@ -443,9 +451,12 @@ extension Composition {
             forSection section: Int
         ) {
             guard let _section = source.section(for: section),
-                  let view = view as? Boundary
+                  let view = (view as? Boundary.Listed)?.wrapped
             else { return }
-            did(display: view, below: _section, at: section)
+            if !source.snapshot.updating {
+                layout.calculated(footer: view.bounds.height, in: _section)
+            }
+            end(display: view, below: _section, at: section)
         }
         public final func tableView(
             _ tableView: UITableView,
@@ -523,6 +534,21 @@ extension Composition {
         #endif
         public final func scrollViewDidScroll(_ scrollView: UIScrollView) {
             scrolled()
+        }
+        public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+            willScroll()
+        }
+        public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+            willStopScroll(with: velocity, target: targetContentOffset)
+        }
+        public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+            endScroll(decelerating: decelerate)
+        }
+        public func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+            willDecelerate()
+        }
+        public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+            stop()
         }
         
         //MARK: - Boundary Delegate
@@ -603,9 +629,9 @@ extension Composition {
         open func end(display section: Section, at index: Int) {}
          
         open func will(display header: Boundary, above section: Section, at index: Int) {}
-        open func did(display header: Boundary, above section: Section, at index: Int) {}
+        open func end(display header: Boundary, above section: Section, at index: Int) {}
         open func will(display footer: Boundary, below section: Section, at index: Int) {}
-        open func did(display footer: Boundary, below section: Section, at index: Int) {}
+        open func end(display footer: Boundary, below section: Section, at index: Int) {}
         
         open func highlightable(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) -> Bool { return selectable(cell: cell, with: item, in: section, for: indexPath) }
         open func highlighted(cell: Cell, with item: Item, in section: Section, for indexPath: IndexPath) {}
@@ -653,7 +679,12 @@ extension Composition {
         open func focused(header: Boundary, in section: Section, at index: Int) { }
         open func focused(footer: Boundary, in section: Section, at index: Int) { }
         
+        open func willScroll() {}
         open func scrolled() {}
+        open func willStopScroll(with velocity: CGPoint, target offset: UnsafeMutablePointer<CGPoint>) {}
+        open func endScroll(decelerating: Bool) {}
+        open func willDecelerate() {}
+        open func stop() {}
         
         //MARK: - Managing DataSource
         /// - layout provider: define how to compose your sections and layout items
