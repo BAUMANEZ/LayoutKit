@@ -338,6 +338,13 @@ extension Composition {
             else { return }
             switch style {
             case .vertical, .custom:
+                if !source.snapshot.updating {
+                    DispatchQueue.main.async { [weak self] in
+                        cell.setNeedsLayout()
+                        cell.layoutIfNeeded()
+                        self?.layout.calculated(height: cell.bounds.height, for: item, in: section)
+                    }
+                }
                 if !layout.visible(section: section) {
                     layout.set(section: section, visible: true)
                     will(display: section, at: indexPath.section)
@@ -366,9 +373,6 @@ extension Composition {
             else { return }
             switch style {
             case .vertical, .custom:
-                if !source.snapshot.updating {
-                    layout.calculated(height: cell.bounds.height, for: item, in: section)
-                }
                 end(display: cell, with: item, in: section, for: indexPath)
             case .grid, .horizontal:
                 layout.set(section: section, visible: false)
@@ -421,6 +425,13 @@ extension Composition {
             guard let _section = source.section(for: section),
                   let view = (view as? Boundary.Listed)?.wrapped
             else { return }
+            if !source.snapshot.updating {
+                DispatchQueue.main.async { [weak self] in
+                    view.setNeedsLayout()
+                    view.layoutIfNeeded()
+                    self?.layout.calculated(header: view.bounds.height, in: _section)
+                }
+            }
             will(display: view, above: _section, at: section)
         }
         public final func tableView(
@@ -431,9 +442,6 @@ extension Composition {
             guard let _section = source.section(for: section),
                   let view = (view as? Boundary.Listed)?.wrapped
             else { return }
-            if !source.snapshot.updating {
-                layout.calculated(header: view.bounds.height, in: _section)
-            }
             end(display: view, above: _section, at: section)
         }
         public final func tableView(
@@ -444,6 +452,13 @@ extension Composition {
             guard let _section = source.section(for: section),
                   let view = (view as? Boundary.Listed)?.wrapped
             else { return }
+            if !source.snapshot.updating {
+                DispatchQueue.main.async { [weak self] in
+                    view.setNeedsLayout()
+                    view.layoutIfNeeded()
+                    self?.layout.calculated(header: view.bounds.height, in: _section)
+                }
+            }
             will(display: view, below: _section, at: section)
         }
         public final func tableView(
@@ -454,9 +469,6 @@ extension Composition {
             guard let _section = source.section(for: section),
                   let view = (view as? Boundary.Listed)?.wrapped
             else { return }
-            if !source.snapshot.updating {
-                layout.calculated(footer: view.bounds.height, in: _section)
-            }
             end(display: view, below: _section, at: section)
         }
         public final func tableView(
