@@ -51,7 +51,7 @@ public protocol CompositionDelegate: AnyObject {
     func focused(footer: Boundary, in section: Section, at index: Int)
     
     func willScroll()
-    func scrolled()
+    func scrolled(section: Section?, with offset: CGPoint)
     func willStopScroll(with velocity: CGPoint, target offset: UnsafeMutablePointer<CGPoint>)
     func endScroll(decelerating: Bool)
     func willDecelerate()
@@ -546,7 +546,7 @@ extension Composition {
         }
         #endif
         public final func scrollViewDidScroll(_ scrollView: UIScrollView) {
-            scrolled()
+            scrolled(section: nil, with: scrollView.contentOffset)
         }
         public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
             willScroll()
@@ -693,7 +693,7 @@ extension Composition {
         open func focused(footer: Boundary, in section: Section, at index: Int) { }
         
         open func willScroll() {}
-        open func scrolled() {}
+        open func scrolled(section: Section?, with offset: CGPoint) {}
         open func willStopScroll(with velocity: CGPoint, target offset: UnsafeMutablePointer<CGPoint>) {}
         open func endScroll(decelerating: Bool) {}
         open func willDecelerate() {}

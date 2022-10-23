@@ -399,7 +399,7 @@ extension Grid {
             default:
                 break
             }
-            parent.scrolled()
+            parent.scrolled(section: section, with: scrollView.contentOffset)
         }
         
         //MARK: - Boundary Delegate
