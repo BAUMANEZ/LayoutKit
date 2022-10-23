@@ -13,10 +13,9 @@ extension Composition {
     public final class Layout<Section: Hashable, Item: Hashable> {
         private typealias Cache = Configuration.Cache<Section, Item>
         
+        private let cache = Cache()
         internal weak var manager: Manager<Section, Item>?
         internal var provider: Provider?
-        
-        private let cache = Cache()
         
         private var frame: CGSize {
             return manager?.view.frame.size ?? .zero
@@ -31,7 +30,11 @@ extension Composition {
             case .absolute(let height):
                 return height
             case .automatic:
-                return UITableView.automaticDimension
+                let key = Cache.Section.Fields.Key(width: frame.width, count: manager?.source.items(for: section).count ?? 0)
+                guard let cached = cache.header(for: key, in: section) else {
+                    return UITableView.automaticDimension
+                }
+                return cached
             default:
                 return .zero
             }
@@ -41,7 +44,11 @@ extension Composition {
             case .absolute(let height):
                 return height
             case .automatic:
-                return UITableView.automaticDimension
+                let key = Cache.Section.Fields.Key(width: frame.width, count: manager?.source.items(for: section).count ?? 0)
+                guard let cached = cache.footer(for: key, in: section) else {
+                    return UITableView.automaticDimension
+                }
+                return cached
             default:
                 return .zero
             }
@@ -150,17 +157,19 @@ extension Composition {
                 return .zero
             }
         }
-        
         public func style(for section: Section) -> Style? {
-            return provider?.style?(section, frame)
+            guard let cached = cache.style(for: section) else {
+                guard let style = provider?.style?(section, frame) else { return nil }
+                cache.store(style: style, in: section)
+                return style
+            }
+            return cached
         }
-        
         public func automatic(for section: Section) -> Configuration.Automatic? {
             guard let source = manager?.source else { return nil }
             let key = Cache.Section.Fields.Key(width: frame.width, count: source.items(for: section).count)
             return cache.automatic(for: key, in: section)
         }
-        
         public func insets(for section: Section) -> UIEdgeInsets {
             switch style(for: section) {
             case .horizontal(let insets, _, _, _):
@@ -171,7 +180,6 @@ extension Composition {
                 return .zero
             }
         }
-        
         public func size(for item: Item, in section: Section) -> CGSize {
             switch style(for: section) {
             case .horizontal(_, _, _, let size):
@@ -182,7 +190,6 @@ extension Composition {
                 return CGSize(width: frame.width, height: height(for: item, in: section))
             }
         }
-        
         public func spacing(for section: Section) -> CGFloat {
             switch style(for: section) {
             case .horizontal(_, let spacing, _, _):
@@ -193,7 +200,6 @@ extension Composition {
                 return .zero
             }
         }
-        
         public func indent(for section: Section) -> CGFloat {
             switch style(for: section) {
             case .horizontal(_, let spacing, _, _):
@@ -205,10 +211,32 @@ extension Composition {
             }
         }
         
+        internal func visible(section: Section) -> Bool {
+            return cache.visible(section: section)
+        }
+        internal func set(section: Section, visible: Bool) {
+            guard visible else {
+                cache.remove(visible: section)
+                return
+            }
+            cache.store(visible: section)
+        }
         internal func calculated(height: CGFloat, for item: Item, in section: Section) {
             let key = Cache.Item.Fields.Key(width: frame.width)
             if cache.height(for: key, with: item, in: section) == nil {
                 cache.store(height: height, for: key, with: item, in: section)                
+            }
+        }
+        internal func calculated(header: CGFloat, in section: Section) {
+            let key = Cache.Section.Fields.Key(width: frame.width, count: manager?.source.items(for: section).count ?? 0)
+            if cache.header(for: key, in: section) == nil {
+                cache.store(header: header, for: key, in: section)
+            }
+        }
+        internal func calculated(footer: CGFloat, in section: Section) {
+            let key = Cache.Section.Fields.Key(width: frame.width, count: manager?.source.items(for: section).count ?? 0)
+            if cache.footer(for: key, in: section) == nil {
+                cache.store(footer: footer, for: key, in: section)
             }
         }
         internal func reload(item: Item, in section: Section) {

@@ -22,10 +22,14 @@ extension Configuration {
     internal final class Cache<SectionIdentifier: Hashable, ItemIdentifier: Hashable> {
         private var sections: [SectionIdentifier: Section.Fields] = [:]
         private var items   : [SectionIdentifier: [ItemIdentifier: Item.Fields]] = [:]
+        private var visible : Set<SectionIdentifier> = []
+        private var styles  : [SectionIdentifier: Composition.Manager<SectionIdentifier, ItemIdentifier>.Layout.Style] = [:]
         
         internal func clear() {
             sections.removeAll()
             items.removeAll()
+            visible.removeAll()
+            styles.removeAll()
         }
         
         
@@ -69,6 +73,37 @@ extension Configuration {
             let cache = sections[section] ?? Section.Fields()
             cache.automatic[key] = automatic
             sections[section] = cache
+        }
+        internal func header(for key: Section.Fields.Key, in section: SectionIdentifier) -> CGFloat? {
+            return sections[section]?.header[key]
+        }
+        internal func store(header: CGFloat, for key: Section.Fields.Key, in section: SectionIdentifier) {
+            let cache = sections[section] ?? Section.Fields()
+            cache.header[key] = header
+            sections[section] = cache
+        }
+        internal func footer(for key: Section.Fields.Key, in section: SectionIdentifier) -> CGFloat? {
+            return sections[section]?.footer[key]
+        }
+        internal func store(footer: CGFloat, for key: Section.Fields.Key, in section: SectionIdentifier) {
+            let cache = sections[section] ?? Section.Fields()
+            cache.footer[key] = footer
+            sections[section] = cache
+        }
+        internal func store(visible section: SectionIdentifier) {
+            visible.insert(section)
+        }
+        internal func remove(visible section: SectionIdentifier) {
+            visible.remove(section)
+        }
+        internal func visible(section: SectionIdentifier) -> Bool {
+            return visible.contains(section)
+        }
+        internal func store(style: Composition.Manager<SectionIdentifier, ItemIdentifier>.Layout.Style, in section: SectionIdentifier) {
+            styles[section] = style
+        }
+        internal func style(for section: SectionIdentifier) -> Composition.Manager<SectionIdentifier, ItemIdentifier>.Layout.Style? {
+            return styles[section]
         }
         
         
@@ -118,6 +153,8 @@ extension Configuration {
         internal func remove(section: SectionIdentifier) {
             sections.removeValue(forKey: section)
             items.removeValue(forKey: section)
+            visible.remove(section)
+            styles.removeValue(forKey: section)
         }
         internal func remove(sections: OrderedSet<SectionIdentifier>) {
             sections.forEach {
@@ -127,6 +164,8 @@ extension Configuration {
         internal func removeAll() {
             items.removeAll()
             sections.removeAll()
+            visible.removeAll()
+            styles.removeAll()
         }
     }
 }
@@ -139,6 +178,8 @@ extension Configuration.Cache {
             internal var interLine: [Key: CGFloat]   = [:]
             internal var columns  : [Key: Int]       = [:]
             internal var automatic: [Key: Configuration.Automatic] = [:]
+            internal var header   : [Key: CGFloat]   = [:]
+            internal var footer   : [Key: CGFloat]   = [:]
             
             internal func store(height: CGFloat, for key: Key) {
                 self.height[key] = height
@@ -154,6 +195,12 @@ extension Configuration.Cache {
             }
             internal func store(automatic: Configuration.Automatic, for key: Key) {
                 self.automatic[key] = automatic
+            }
+            internal func store(header: CGFloat, for key: Key) {
+                self.header[key] = header
+            }
+            internal func store(footer: CGFloat, for key: Key) {
+                self.footer[key] = footer
             }
             
             internal struct Key: Hashable {

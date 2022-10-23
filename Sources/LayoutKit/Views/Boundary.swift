@@ -114,12 +114,9 @@ extension Boundary {
             boundary.translatesAutoresizingMaskIntoConstraints = false
             addSubview(boundary)
             
-            let top = boundary.topAnchor.constraint(equalTo: topAnchor);
-            top.priority = .defaultHigh; top.isActive = true
-            let left = boundary.leftAnchor.constraint(equalTo: leftAnchor);
-            left.priority = .defaultHigh; left.isActive = true
-            let right = boundary.rightAnchor.constraint(equalTo: rightAnchor);
-            right.priority = .defaultHigh; right.isActive = true
+            boundary.topAnchor.constraint(equalTo: topAnchor).isActive = true
+            boundary.leftAnchor.constraint(equalTo: leftAnchor).isActive = true
+            boundary.rightAnchor.constraint(equalTo: rightAnchor).isActive = true
             let bottom = boundary.bottomAnchor.constraint(equalTo: bottomAnchor);
             bottom.priority = .defaultHigh; bottom.isActive = true
         }

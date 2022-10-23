@@ -14,7 +14,6 @@ extension Composition {
         public fileprivate(set) var pages   : [Section: Int] = [:]
         public fileprivate(set) var offsets : [Section: CGPoint] = [:]
         public fileprivate(set) var selected: Set<Item> = []
-        public fileprivate(set) var wrappers: [Section: String] = [:]
                 
         public lazy var snapshot = Snapshot(source: self)
         internal weak var manager: Manager<Section, Item>?
@@ -64,12 +63,6 @@ extension Composition {
             return pages[section]
         }
         
-        internal func identifier(for wrapper: Section) -> String? {
-            return self.wrappers[wrapper]
-        }
-        internal func set(identifier: String, for wrapper: Section) {
-            self.wrappers[wrapper] = identifier
-        }
         internal func separatable(for indexPath: IndexPath) -> Bool {
             guard let section = self.section(for: indexPath.section) else { return false }
             let items = items(for: section)
@@ -244,7 +237,6 @@ extension Composition.Source {
             source?.pages.removeAll()
             source?.offsets.removeAll()
             source?.selected.removeAll()
-            source?.wrappers.removeAll()
             self.sections.indices.forEach { source?.manager?.grid(for: $0)?.clear() }
             self.items.removeAll()
             let delete = IndexSet(self.sections.indices)
@@ -285,7 +277,6 @@ extension Composition.Source {
                 source?.pages.removeValue(forKey: $0)
                 source?.offsets.removeValue(forKey: $0)
                 items[$0]?.forEach{ item in source?.selected.remove(item)}
-                source?.wrappers.removeValue(forKey: $0)
             }
             sections.indices.forEach { source?.manager?.grid(for: $0)?.clear() }
             let pairs = sections.reduce(into: [Pair]()) {
