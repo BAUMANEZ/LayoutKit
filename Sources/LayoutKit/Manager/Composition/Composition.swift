@@ -825,6 +825,18 @@ extension Composition.Manager {
         }
         return cells
     }
+    public final var configuredBoundaries: [Boundary] {
+        var boundaries: [Boundary] = []
+        for section in source.sections {
+            if let header = header(for: section) {
+                boundaries.append(header)
+            }
+            if let footer = footer(for: section) {
+                boundaries.append(footer)
+            }
+        }
+        return boundaries
+    }
     public final var visibleIndexPaths: [IndexPath] {
         guard let indexPaths = view.indexPathsForVisibleRows else { return [] }
         return indexPaths.reduce(into: Array<IndexPath>()) { visible, indexPath in
