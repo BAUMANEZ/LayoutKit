@@ -764,12 +764,12 @@ extension Composition {
             }
         }
         private func wrapper(section: Section, for index: Int) -> Cell.Listed?  {
-            guard let wrapper = view.dequeue(cell: Cell.Wrapper<Section, Item>.self, for: IndexPath(item: 0, section: index)) else { return nil }
+            guard let listed = view.dequeue(cell: Cell.Wrapper<Section, Item>.self, for: IndexPath(item: 0, section: index)) else { return nil }
             let wrapped: Cell.Wrapper<Section, Item> = {
-                guard let wrapped = wrapper.wrapped as? Cell.Wrapper<Section, Item> else {
-                    let wrapped = Cell.Wrapper<Section, Item>()
-                    wrapper.wrap(cell: wrapped)
-                    return wrapped
+                guard let wrapped = listed.wrapped as? Cell.Wrapper<Section, Item> else {
+                    let wrapper = Cell.Wrapper<Section, Item>()
+                    listed.wrap(cell: wrapper)
+                    return wrapper
                 }
                 return wrapped
             }()
@@ -777,7 +777,7 @@ extension Composition {
                 guard let self = self else { return }
                 wrapped.configure(in: index, parent: self)
             }
-            return wrapper
+            return listed
         }
         
         open func update(for traitCollection: UITraitCollection) {}
