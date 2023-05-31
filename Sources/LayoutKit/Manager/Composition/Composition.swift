@@ -764,9 +764,7 @@ extension Composition {
             }
         }
         private func wrapper(section: Section, for index: Int) -> Cell.Listed?  {
-            let type = Cell.Wrapper<Section, Item>.self
-            let wrapper: Cell.Listed? = view.dequeue(wrapper: type, for: IndexPath(item: 0, section: index))
-            guard let wrapper else { return nil }
+            guard let wrapper = view.dequeue(cell: Cell.Wrapper<Section, Item>.self, for: IndexPath(item: 0, section: index)) else { return nil }
             let wrapped: Cell.Wrapper<Section, Item> = {
                 guard let wrapped = wrapper.wrapped as? Cell.Wrapper<Section, Item> else {
                     let wrapped = Cell.Wrapper<Section, Item>()

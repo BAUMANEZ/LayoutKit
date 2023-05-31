@@ -13,7 +13,7 @@ extension Grid {
         internal typealias Parent = Composition.Manager<Section, Item>?
         
         internal final let view: UICollectionView
-        internal final let _section: Int
+        internal final var _section: Int
         internal final weak var parent: Parent
                 
         internal final let multiplier = 200
@@ -23,6 +23,11 @@ extension Grid {
         }
         
         private var lastDequedCell: Cell.Grided?
+        
+        internal func set(parent: Parent, section: Int) {
+            self.parent = parent
+            self._section = section
+        }
                 
         //MARK: - Init
         internal init(parent: Parent, section: Int, in content: UIView) {

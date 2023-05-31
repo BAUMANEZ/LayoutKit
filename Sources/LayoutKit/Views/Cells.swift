@@ -91,12 +91,16 @@ extension Cell {
         }
         
         internal func clear() {
-            grid?.view.removeFromSuperview()
-            grid = nil
+//            grid?.view.removeFromSuperview()
+//            grid = nil
         }
         
         internal func configure(in section: Int, parent: Parent) {
-            self.grid = Child(parent: parent, section: section, in: content)
+            guard let grid else {
+                grid = Child(parent: parent, section: section, in: content)
+                return
+            }
+            grid.set(parent: parent, section: section)
         }
     }
 }
@@ -225,25 +229,11 @@ extension UITableView {
     internal func register(_ cell: Cell.Type) {
         register(Cell.Listed.self, forCellReuseIdentifier: cell.identifier)
     }
-    internal func register(_ wrapper: Cell.Type, template: String? = nil) {
-        if let template {
-            register(Cell.Listed.self, forCellReuseIdentifier: wrapper.identifier + "_" + template)
-        } else {
-            register(wrapper.self)
-        }
-    }
     internal func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Listed? {
         return dequeueReusableCell(withIdentifier: cell._identifier, for: indexPath) as? Cell.Listed
     }
     internal func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Listed? {
         return dequeueReusableCell(withIdentifier: cell.identifier, for: indexPath) as? Cell.Listed
-    }
-    internal func dequeue(wrapper: Cell.Type, for indexPath: IndexPath, with template: String? = nil) -> Cell.Listed? {
-        if let template {
-            return dequeueReusableCell(withIdentifier: wrapper.identifier + "_" + template, for: indexPath) as? Cell.Listed
-        } else {
-            return dequeue(cell: wrapper, for: indexPath)
-        }
     }
 }
 
@@ -251,16 +241,10 @@ extension UICollectionView {
     internal func register(_ cell: Cell.Type) {
         register(Cell.Grided.self, forCellWithReuseIdentifier: cell.identifier)
     }
-    internal func register(_ cell: Cell.Type, template: String) {
-        register(Cell.Grided.self, forCellWithReuseIdentifier: cell.identifier + "_" + template)
-    }
     internal func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Grided? {
         return dequeueReusableCell(withReuseIdentifier: cell._identifier, for: indexPath) as? Cell.Grided
     }
     internal func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Grided? {
         return dequeueReusableCell(withReuseIdentifier: cell.identifier, for: indexPath) as? Cell.Grided
-    }
-    internal func dequeue(cell: Cell, template: String, for indexPath: IndexPath) -> Cell.Grided? {
-        return dequeueReusableCell(withReuseIdentifier: cell._identifier + "_" + template, for: indexPath) as? Cell.Grided
     }
 }
