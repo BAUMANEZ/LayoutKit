@@ -21,9 +21,7 @@ extension Grid {
             guard let parent, let section = parent.source.section(for: _section) else { return 1 }
             return max(1, parent.source.items(for: section).count)
         }
-        
-        private var lastDequedCell: Cell.Grided?
-                
+                        
         //MARK: - Init
         internal init(parent: Parent, section: Int, in content: UIView) {
             let flow = FlowLayout<Section, Item>()
@@ -40,7 +38,6 @@ extension Grid {
                   let section = parent.source.section(for: _section),
                   let style = parent.layout.style(for: section)
             else { return }
-            view.register(Cell.self)
             register()
             view.delegate = self
             view.dataSource = self
@@ -162,9 +159,8 @@ extension Grid {
             let _indexPath = IndexPath(item: indexPath.item%mod, section: _section)
             guard let parent,
                   let cell = parent.source.cell(for: _indexPath) as? Cell,
-                  let grided = lastDequedCell ?? collectionView.dequeue(cell: cell, for: indexPath)
-            else { return collectionView.dequeue(cell: Cell(), for: indexPath) ?? UICollectionViewCell() }
-            lastDequedCell = nil
+                  let grided = collectionView.dequeue(cell: type(of: cell), for: indexPath)
+            else { return UICollectionViewCell() }
             cell.selected = parent.source.selected(indexPath: _indexPath)
             cell.set(selected: cell.selected, animated: false)
             if cell.dequeID != grided.wrapped?.dequeID {
@@ -489,10 +485,11 @@ extension Grid {
         }
         
         private func register() {
-            guard let parent else { return }
-            parent.cells.forEach{
-                view.register($0.self)
-            }
+//            view.register(Cell.self)
+//            guard let parent else { return }
+//            parent.cells.forEach{
+//                view.register($0.self)
+//            }
         }
     }
 }
@@ -531,17 +528,6 @@ extension Grid.Manager {
         default:
             return
         }
-    }
-    internal final func dequeue<T: Cell>(
-        cell: T.Type,
-        with item: Int
-    ) -> T? {
-        guard let grided = view.dequeue(cell: cell, for: IndexPath(item: item%mod, section: 0)) else {
-            lastDequedCell = nil
-            return T(frame: .zero)
-        }
-        lastDequedCell = grided
-        return (grided.wrapped as? T) ?? T(frame: .zero)
     }
 }
 

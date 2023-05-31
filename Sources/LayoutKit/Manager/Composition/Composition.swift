@@ -73,8 +73,6 @@ extension Composition {
         #if os(tvOS)
         public var lastFocusedIndexPath: IndexPath?
         #endif
-        private var lastDequedCell: Cell.Listed?
-        private var lastDequedBoundary: Boundary.Listed?
         
         //MARK: - Interface Settings
         /// - behaviour defines interaction parameters
@@ -111,8 +109,6 @@ extension Composition {
         }
         
         private func setup(in content: UIView) {
-            view.register(Cell.self)
-            view.register(Cell.Wrapper<Section, Item>.self)
             register()
             view.delegate = self
             view.dataSource = self
@@ -189,9 +185,8 @@ extension Composition {
             switch layout.style(for: section) {
             case .vertical(_, let separator):
                 guard let cell = source.cell(for: indexPath) as? Cell,
-                      let listed = lastDequedCell ?? tableView.dequeue(cell: cell, for: indexPath)
-                else { return UITableViewCell()  }
-                lastDequedCell = nil
+                      let listed = tableView.dequeue(cell: type(of: cell), for: indexPath)
+                else { return UITableViewCell() }
                 cell.selected = source.selected(indexPath: indexPath)
                 cell.set(selected: cell.selected, animated: false)
                 if cell.dequeID != listed.wrapped?.dequeID {
@@ -203,8 +198,8 @@ extension Composition {
                 return listed
             case .custom:
                 guard let cell = source.cell(for: indexPath) as? Cell,
-                      let listed = tableView.dequeue(cell: cell, for: indexPath)
-                else { return UITableViewCell()  }
+                      let listed = tableView.dequeue(cell: type(of: cell), for: indexPath)
+                else { return UITableViewCell() }
                 cell.selected = source.selected(indexPath: indexPath)
                 cell.set(selected: cell.selected, animated: false)
                 if cell.dequeID != listed.wrapped?.dequeID {
@@ -220,9 +215,8 @@ extension Composition {
             viewForHeaderInSection section: Int
         ) -> UIView? {
             guard let boundary = source.header(for: section),
-                  let listed = lastDequedBoundary ?? tableView.dequeue(boundary)
+                  let listed = tableView.dequeue(boundary: type(of: boundary), for: section, in: .header)
             else { return nil }
-            lastDequedBoundary = nil
             listed.delegate = self
             listed.section = section
             if boundary.dequeID != listed.wrapped?.dequeID {
@@ -235,7 +229,7 @@ extension Composition {
             viewForFooterInSection section: Int
         ) -> UIView? {
             guard let boundary = source.footer(for: section),
-                  let listed = tableView.dequeue(boundary)
+                  let listed = tableView.dequeue(boundary: type(of: boundary), for: section, in: .footer)
             else { return nil }
             listed.delegate = self
             listed.section = section
@@ -715,34 +709,31 @@ extension Composition {
             behaviour.provider = provider
         }
         
+        private var cachedCells: [IndexPath: Cell] = [:]
+        private var cachedBoundaries: [Int: Boundary] = [:]
+        
         public final func dequeue<T: Cell>(
             cell: T.Type,
             for indexPath: IndexPath
         ) -> T? {
-            guard let section = source.section(for: indexPath.section),
-                  let style = layout.style(for: section)
-            else { return nil }
-            switch style {
-            case .vertical, .custom:
-                guard let listed = view.dequeue(cell: cell, for: indexPath) else {
-                    lastDequedCell = nil
-                    return T(frame: .zero)
-                }
-                lastDequedCell = listed
-                return (listed.wrapped as? T) ?? T(frame: .zero)
-            default:
-                return grid(for: indexPath.section)?.grid?.dequeue(cell: cell, with: indexPath.item)
+            guard let cell = cachedCells[indexPath] else {
+                let cell = T(frame: .zero)
+                cachedCells[indexPath] = cell
+                return cell
             }
+            return cell as? T
         }
         public final func dequeue<T: Boundary>(
-            boundary: T.Type
+            boundary: T.Type,
+            for section: Int,
+            in location: Boundary.Location
         ) -> T? {
-            guard let listed = view.dequeue(boundary) else {
-                lastDequedBoundary = nil
-                return T(frame: .zero)
+            guard let boundary = cachedBoundaries[section] else {
+                let boundary = T(frame: .zero)
+                cachedBoundaries[section] = boundary
+                return boundary
             }
-            lastDequedBoundary = listed
-            return (listed.wrapped as? T) ?? T(frame: .zero)
+            return boundary as? T
         }
 
         //MARK: Override these properties to register
@@ -756,28 +747,34 @@ extension Composition {
         }
         
         private func register() {
-            cells.forEach{
-                view.register($0.self)
-            }
-            boundaries.forEach {
-                view.register($0.self)
-            }
+//            view.register(Cell.self)
+//            view.register(Cell.Wrapper<Section, Item>.self)
+//            
+//            cells.forEach{
+//                view.register($0.self)
+//            }
+//            boundaries.forEach {
+//                view.register($0.self)
+//            }
         }
-        private func wrapper(section: Section, for index: Int) -> Cell.Listed?  {
-            let type = Cell.Wrapper<Section, Item>.self
-            let wrapper: Cell.Listed? = view.dequeue(wrapper: type, for: IndexPath(item: 0, section: index))
-            guard let wrapper else { return nil }
+        private var wrappers: [Int: Cell.Listed] = [:]
+        private func wrapper(section: Section, for index: Int) -> Cell.Listed? {
+            guard let wrapper = view.dequeue(cell: Cell.Wrapper<Section, Item>.self, for: IndexPath(row: 0, section: index)) else { return nil }
+            var refresh = false
             let wrapped: Cell.Wrapper<Section, Item> = {
                 guard let wrapped = wrapper.wrapped as? Cell.Wrapper<Section, Item> else {
                     let wrapped = Cell.Wrapper<Section, Item>()
                     wrapper.wrap(cell: wrapped)
+                    refresh = true
                     return wrapped
                 }
                 return wrapped
             }()
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                wrapped.configure(in: index, parent: self)
+            if refresh {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    wrapped.configure(in: index, parent: self)
+                }
             }
             return wrapper
         }
@@ -1096,12 +1093,15 @@ extension Composition.Manager {
 
 public class Composition {
     public struct Scrolling {
-        public let vBounce          : Bool
-        public let vScroll          : Bool
-        public let hBounce          : Bool
-        public let hScroll          : Bool
+        public let vBounce: Bool
+        public let vScroll: Bool
+        public let hBounce: Bool
+        public let hScroll: Bool
 
-        public init(vBounce: Bool, vScroll: Bool, hBounce: Bool, hScroll: Bool) {
+        public init(vBounce: Bool,
+                    vScroll: Bool,
+                    hBounce: Bool,
+                    hScroll: Bool) {
             self.vBounce = vBounce
             self.vScroll = vScroll
             self.hBounce = hBounce

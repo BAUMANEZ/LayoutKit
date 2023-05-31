@@ -192,15 +192,26 @@ extension Boundary {
     }
 }
 
+extension Boundary {
+    public enum Location {
+        case header
+        case footer
+        
+        internal var literal: String {
+            switch self {
+            case .header:
+                return "header"
+            case .footer:
+                return "footer"
+            }
+        }
+    }
+}
+
 //MARK: Internally views are wrapped in tableHeaderFooterView
 extension UITableView {
-    internal func register(_ view: Boundary.Type) {
-        register(Boundary.Listed.self, forHeaderFooterViewReuseIdentifier: view.identifier)
-    }
-    internal func dequeue(_ view: Boundary) -> Boundary.Listed? {
-        dequeueReusableHeaderFooterView(withIdentifier: view._identifier) as? Boundary.Listed
-    }
-    internal func dequeue(_ view: Boundary.Type) -> Boundary.Listed? {
-        dequeueReusableHeaderFooterView(withIdentifier: view.identifier) as? Boundary.Listed
+    internal func dequeue(boundary: Boundary.Type, for index: Int, in location: Boundary.Location) -> Boundary.Listed? {
+        register(Boundary.Listed.self, forHeaderFooterViewReuseIdentifier: "boundary_\(index)_\(location.literal)")
+        return dequeueReusableHeaderFooterView(withIdentifier: "boundary_\(index)_\(location.literal)") as? Boundary.Listed
     }
 }
