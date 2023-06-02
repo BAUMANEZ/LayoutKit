@@ -59,7 +59,13 @@ public protocol CompositionDelegate: AnyObject {
 }
 
 extension Composition {
-    open class Manager<Section: Hashable, Item: Hashable>: NSObject, UITableViewDelegate, UITableViewDataSource, CompositionDelegate, BoundaryDelegate {
+
+    open class Manager<Section: Hashable, Item: Hashable>: NSObject,
+                                                           UITableViewDelegate,
+                                                           UITableViewDataSource,
+                                                           CompositionDelegate,
+                                                           BoundaryDelegate {
+
         public typealias Layout    = Composition.Layout<Section, Item>
         public typealias Source    = Composition.Source<Section, Item>
         public typealias Behaviour = Composition.Behaviour<Section, Item>
@@ -83,9 +89,11 @@ extension Composition {
         open var scrolling: Composition.Scrolling {
             return Scrolling(vBounce: true, vScroll: true, hBounce: false, hScroll: false)
         }
+
         open var insets: UIEdgeInsets {
             return .zero
         }
+
         open var margins: UIEdgeInsets {
             return .zero
         }
@@ -93,6 +101,7 @@ extension Composition {
         public final var scroll: UIScrollView {
             return view
         }
+
         public final var contentOffset: CGPoint {
             return view.contentOffset
         }
@@ -152,12 +161,15 @@ extension Composition {
         open func set(sections: OrderedDictionary<Section, OrderedSet<Item>>, animated: Bool) {
             source.snapshot.batch(updates: [.setSections(sections.keys, items: { sections[$0] })], animation: animated ? .fade : nil)
         }
+
         open func append(sections: OrderedDictionary<Section, OrderedSet<Item>>, animated: Bool) {
             source.snapshot.batch(updates: [.appendSections(sections.keys, items: { sections[$0] })], animation: animated ? .fade : nil)
         }
+
         open func reloadAll(animated: Bool) {
             source.snapshot.batch(updates: [.reloadSections(source.sections)], animation: animated ? .fade : nil)
         }
+
         open func deleteAll(animated: Bool) {
             source.snapshot.batch(updates: [.deleteSections(source.sections)], animation: animated ? .fade : nil)
         }
@@ -168,6 +180,7 @@ extension Composition {
         ) -> Int {
             return source.sections.count
         }
+
         public final func tableView(
             _ tableView: UITableView,
             numberOfRowsInSection section: Int
@@ -176,6 +189,7 @@ extension Composition {
             switch layout.style(for: section) {
             case .vertical:
                 return source.items(for: section).count
+
             default:
                 return 1
             }
@@ -201,6 +215,7 @@ extension Composition {
                     listed.insert(separator: separator.view, height: separator.height)
                 }
                 return listed
+
             case .custom:
                 guard let cell = source.cell(for: indexPath) as? Cell,
                       let listed = tableView.dequeue(cell: cell, for: indexPath)
@@ -211,10 +226,12 @@ extension Composition {
                     listed.wrap(cell: cell)
                 }
                 return listed
+
             default:
                 return wrapper(section: section, for: indexPath.section) ?? UITableViewCell()
             }
         }
+
         public final func tableView(
             _ tableView: UITableView,
             viewForHeaderInSection section: Int
@@ -230,6 +247,7 @@ extension Composition {
             }
             return listed
         }
+
         public final func tableView(
             _ tableView: UITableView,
             viewForFooterInSection section: Int
@@ -256,6 +274,7 @@ extension Composition {
             switch style {
             case .grid, .horizontal:
                 return layout.height(for: section)
+
             case .vertical(_, let separator):
                 guard let item = source.item(for: indexPath) else { return .zero }
                 let height = layout.height(for: item, in: section)
@@ -267,10 +286,12 @@ extension Composition {
                     return separator.height
                 }()
                 return height+(_separator)
+
             case .custom(let height):
                 return height
             }
         }
+
         public final func tableView(
             _ tableView: UITableView,
             estimatedHeightForRowAt indexPath: IndexPath
@@ -281,6 +302,7 @@ extension Composition {
             switch style {
             case .grid, .horizontal:
                 return layout.height(for: section)
+
             case .vertical(_, let separator):
                 guard let item = source.item(for: indexPath) else { return .zero }
                 let height = layout.height(for: item, in: section)
@@ -292,10 +314,12 @@ extension Composition {
                     return separator.height
                 }()
                 return height+(_separator)
+
             case .custom(let height):
                 return height
             }
         }
+
         public final func tableView(
             _ tableView: UITableView,
             heightForHeaderInSection section: Int
@@ -303,6 +327,7 @@ extension Composition {
             guard let section = source.section(for: section) else { return .zero }
             return layout.header(for: section)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             estimatedHeightForHeaderInSection section: Int
@@ -310,6 +335,7 @@ extension Composition {
             guard let section = source.section(for: section) else { return .zero }
             return layout.header(for: section)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             heightForFooterInSection section: Int
@@ -317,6 +343,7 @@ extension Composition {
             guard let section = source.section(for: section) else { return .zero }
             return layout.footer(for: section)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             estimatedHeightForFooterInSection section: Int
@@ -350,6 +377,7 @@ extension Composition {
                     will(display: section, at: indexPath.section)
                 }
                 will(display: cell, with: item, in: section, for: indexPath)
+
             case .grid, .horizontal:
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
@@ -361,6 +389,7 @@ extension Composition {
                 }
             }
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didEndDisplaying cell: UITableViewCell,
@@ -374,11 +403,13 @@ extension Composition {
             switch style {
             case .vertical, .custom:
                 end(display: cell, with: item, in: section, for: indexPath)
+
             case .grid, .horizontal:
                 layout.set(section: section, visible: false)
                 end(display: section, at: indexPath.section)
             }
         }
+
         public final func tableView(
             _ tableView: UITableView,
             willSelectRowAt indexPath: IndexPath
@@ -389,6 +420,7 @@ extension Composition {
             else { return nil }
             return selectable(cell: cell, with: item, in: section, for: indexPath) ? indexPath : nil
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didSelectRowAt indexPath: IndexPath
@@ -398,6 +430,7 @@ extension Composition {
             else { return }
             set(item: item, in: section, selected: true, programatically: false)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             willDeselectRowAt indexPath: IndexPath
@@ -408,6 +441,7 @@ extension Composition {
             else { return nil}
             return deselectable(cell: cell, with: item, in: section, for: indexPath) ? indexPath : nil
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didDeselectRowAt indexPath: IndexPath
@@ -417,6 +451,7 @@ extension Composition {
             else { return }
             set(item: item, in: section, selected: false, programatically: false)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             willDisplayHeaderView view: UIView,
@@ -434,6 +469,7 @@ extension Composition {
             }
             will(display: view, above: _section, at: section)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didEndDisplayingHeaderView view: UIView,
@@ -444,6 +480,7 @@ extension Composition {
             else { return }
             end(display: view, above: _section, at: section)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             willDisplayFooterView view: UIView,
@@ -461,6 +498,7 @@ extension Composition {
             }
             will(display: view, below: _section, at: section)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didEndDisplayingFooterView view: UIView,
@@ -471,6 +509,7 @@ extension Composition {
             else { return }
             end(display: view, below: _section, at: section)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             shouldHighlightRowAt indexPath: IndexPath
@@ -481,6 +520,7 @@ extension Composition {
             else { return false }
             return highlightable(cell: cell, with: item, in: section, for: indexPath)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didHighlightRowAt indexPath: IndexPath
@@ -493,6 +533,7 @@ extension Composition {
             cell.set(highlighted: true, animated: true)
             highlighted(cell: cell, with: item, in: section, for: indexPath)
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didUnhighlightRowAt indexPath: IndexPath
@@ -505,6 +546,7 @@ extension Composition {
             cell.set(highlighted: false, animated: true)
             unhighlighted(cell: cell, with: item, in: section, for: indexPath)
         }
+
         #if os(tvOS)
         public final func tableView(
             _ tableView: UITableView,
@@ -519,16 +561,19 @@ extension Composition {
                       let cell = (view.cellForRow(at: indexPath) as? Cell.Listed)?.wrapped
                 else { return false }
                 return focusable(cell: cell, with: item, in: section, for: indexPath)
+
             case .grid, .horizontal, .custom:
                 return false
             }
         }
+
         public final func tableView(
             _ tableView: UITableView,
             shouldUpdateFocusIn context: UITableViewFocusUpdateContext
         ) -> Bool {
             should(update: FocusUpdateContext(tabled: context))
         }
+
         public final func tableView(
             _ tableView: UITableView,
             didUpdateFocusIn context: UITableViewFocusUpdateContext,
@@ -545,21 +590,27 @@ extension Composition {
             focused(cell: cell, with: item, in: section, for: indexPath, with: focus, using: coordinator)
         }
         #endif
+
         public final func scrollViewDidScroll(_ scrollView: UIScrollView) {
             scrolled(section: nil, with: scrollView.contentOffset)
         }
+
         public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
             willScroll()
         }
+
         public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
             willStopScroll(with: velocity, target: targetContentOffset)
         }
+
         public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
             endScroll(decelerating: decelerate)
         }
+
         public func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
             willDecelerate()
         }
+
         public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
             stop()
         }
@@ -569,54 +620,67 @@ extension Composition {
             guard let _section = source.section(for: section) else { return false }
             return selectable(header: header, in: _section, at: section)
         }
+
         final func selectable(footer: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return selectable(footer: footer, in: _section, at: section)
         }
+
         final func selected(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             selected(header: header, in: _section, at: section)
         }
+
         final func selected(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             selected(footer: footer, in: _section, at: section)
         }
+
         final func highlightable(header: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return highlightable(header: header, in: _section, at: section)
         }
+
         final func highlightable(footer: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return highlightable(footer: footer, in: _section, at: section)
         }
+
         final func highlighted(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             highlighted(header: header, in: _section, at: section)
         }
+
         final func unhighlighted(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             unhighlighted(header: header, in: _section, at: section)
         }
+
         final func highlighted(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             highlighted(footer: footer, in: _section, at: section)
         }
+
         final func unhighlighted(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             highlighted(footer: footer, in: _section, at: section)
         }
+
         final func focusable(header: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return focusable(header: header, in: _section, at: section)
         }
+
         final func focusable(footer: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return focusable(footer: footer, in: _section, at: section)
         }
+
         final func focused(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             focused(header: header, in: _section, at: section)
         }
+
         final func focused(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             focused(footer: footer, in: _section, at: section)
@@ -707,10 +771,12 @@ extension Composition {
             layout.provider = provider
             source.snapshot.batch(updates: [.refreshSections(source.sections)], animation: animated ? .fade : nil)
         }
+
         public final func set(source provider: Source.Provider?, animated: Bool) {
             source.provider = provider
             source.snapshot.batch(updates: [.reloadSections(source.sections)], animation: animated ? .fade : nil)
         }
+
         public final func set(behaviour provider: Behaviour.Provider?) {
             behaviour.provider = provider
         }
@@ -730,10 +796,12 @@ extension Composition {
                 }
                 lastDequedCell = listed
                 return (listed.wrapped as? T) ?? T(frame: .zero)
+
             default:
                 return grid(for: indexPath.section)?.grid?.dequeue(cell: cell, with: indexPath.item)
             }
         }
+
         public final func dequeue<T: Boundary>(
             boundary: T.Type
         ) -> T? {
@@ -751,6 +819,7 @@ extension Composition {
         open var cells: [Cell.Type] {
             return []
         }
+
         open var boundaries: [Boundary.Type] {
             return []
         }
@@ -763,6 +832,7 @@ extension Composition {
                 view.register($0.self)
             }
         }
+
         private func wrapper(section: Section, for index: Int) -> Cell.Listed?  {
             let type = Cell.Wrapper<Section, Item>.self
             let wrapper: Cell.Listed? = view.dequeue(wrapper: type, for: IndexPath(item: 0, section: index))
@@ -788,6 +858,7 @@ extension Composition {
 
 //MARK: - Source extraction
 extension Composition.Manager {
+
     public final var visibleCells: [Cell] {
         guard let indexPaths = view.indexPathsForVisibleRows else { return [] }
         return indexPaths.reduce(into: Array<Cell>()) { visible, indexPath in
@@ -798,14 +869,17 @@ extension Composition.Manager {
             case .vertical:
                 guard let cell = cell(for: indexPath) else { return () }
                 visible.append(cell)
+
             case .grid, .horizontal:
                 guard let grid = grid(for: indexPath.section)?.grid else { return () }
                 visible.append(contentsOf: grid.view.visibleCells.compactMap{ grid.wrapped(for: $0) })
+
             case .custom:
                 return ()
             }
         }
     }
+
     public final var configuredCells: [Cell] {
         var cells: [Cell] = []
         for (i, section) in source.sections.enumerated() {
@@ -816,15 +890,18 @@ extension Composition.Manager {
                     guard let cell = cell(for: IndexPath(item: j, section: i)) else { continue }
                     cells.append(cell)
                 }
+
             case .horizontal, .grid:
                 guard let grid = grid(for: i)?.grid else { continue }
                 cells.append(contentsOf: source.items(for: section).enumerated().compactMap{ grid.cell(for: $0.offset) })
+
             case .custom:
                 continue
             }
         }
         return cells
     }
+
     public final var configuredBoundaries: [Boundary] {
         var boundaries: [Boundary] = []
         for section in source.sections {
@@ -837,6 +914,7 @@ extension Composition.Manager {
         }
         return boundaries
     }
+
     public final var visibleIndexPaths: [IndexPath] {
         guard let indexPaths = view.indexPathsForVisibleRows else { return [] }
         return indexPaths.reduce(into: Array<IndexPath>()) { visible, indexPath in
@@ -846,16 +924,19 @@ extension Composition.Manager {
             switch style {
             case .vertical:
                 visible.append(indexPath)
+
             case .grid, .horizontal:
                 guard let grid = grid(for: indexPath.section)?.grid else { return () }
                 visible.append(contentsOf: grid.view.indexPathsForVisibleItems.map {
                     IndexPath(item: $0.item, section: indexPath.section)
                 })
+
             case .custom:
                 return ()
             }
         }
     }
+
     public final var configuredIndexPaths: [IndexPath] {
         var indexPaths: [IndexPath] = []
         for (i, section) in source.sections.enumerated() {
@@ -879,6 +960,7 @@ extension Composition.Manager {
         }
         return indexPaths
     }
+
     public final func cell(for item: Item) -> Cell? {
         guard let section = source.section(for: item),
               let indexPath = source.indexPath(for: item),
@@ -887,30 +969,37 @@ extension Composition.Manager {
         switch style {
         case .vertical, .custom:
             return cell(for: indexPath)
+
         case .grid, .horizontal:
             return grid(for: indexPath.section)?.grid?.cell(for: indexPath.item)
         }
     }
+
     public final func header(for section: Section) -> Boundary? {
         guard let index = source.index(for: section) else { return nil }
         return (view.headerView(forSection: index) as? Boundary.Listed)?.wrapped
     }
+
     public final func footer(for section: Section) -> Boundary? {
         guard let index = source.index(for: section) else { return nil }
         return (view.footerView(forSection: index) as? Boundary.Listed)?.wrapped
     }
+
     public final func sectionRect(for index: Int) -> CGRect {
         return view.rect(forSection: index)
     }
+
     public final func headerRect(for section: Int) -> CGRect {
         return view.rectForHeader(inSection: section)
     }
+
     public final func footerRect(for section: Int) -> CGRect {
         return view.rectForFooter(inSection: section)
     }
 }
 
 extension Composition.Manager {
+
     public final func set(
         header: UIView,
         height: CGFloat,
@@ -920,6 +1009,7 @@ extension Composition.Manager {
         header.frame = CGRect(x: offset.x, y: offset.y, width: view.frame.width, height: height)
         view.tableHeaderView = header
     }
+
     public final func scroll(
         to item: Item,
         position: Composition.ScrollPosition,
@@ -941,6 +1031,7 @@ extension Composition.Manager {
                 }
             }()
             scroll(to: indexPath, at: scrollPosition, animated: animated)
+
         case .grid, .horizontal:
             let scrollPosition: UICollectionView.ScrollPosition = {
                 switch position {
@@ -957,10 +1048,12 @@ extension Composition.Manager {
                 }
             }()
             grid(for: indexPath.section)?.grid?.scroll(to: indexPath.item, at: scrollPosition, animated: animated)
+
         case .custom:
             return
         }
     }
+
     public final func select(
         item: Item,
         position: Composition.ScrollPosition?,
@@ -973,10 +1066,12 @@ extension Composition.Manager {
         }
         set(item: item, in: section, selected: true, programatically: true, completion: completion)
     }
+
     public final func selectAll(animated: Bool = true) {
         source.selectAll()
         source.selected.forEach { select(item: $0, position: nil, animated: true) }
     }
+
     public final func deselect(
         item: Item,
         animated: Bool = true,
@@ -985,9 +1080,11 @@ extension Composition.Manager {
         guard let section = source.section(for: item) else { return }
         set(item: item, in: section, selected: false, programatically: true, completion: completion)
     }
+
     public final func deselectAll(animated: Bool = true) {
         source.selected.forEach { deselect(item: $0, animated: true) }
     }
+
     func set(
         item: Item,
         in section: Section,
@@ -1014,6 +1111,7 @@ extension Composition.Manager {
         source.set(item: item, selected: true)
         set(item: item, _item: indexPath.item, section: section, _section: indexPath.section, style: style, selected: true, programatically: programatically, completion: completion)
     }
+
     private func set(
         item: Item,
         _item: Int,
@@ -1033,6 +1131,7 @@ extension Composition.Manager {
             if !programatically {
                 selected ? self.selected(cell: cell, with: item, in: section, for: _indexPath) : self.deselected(cell: cell, with: item, in: section, for: _indexPath)
             }
+
         case .grid:
             guard let grid = grid(for: _section)?.grid,
                   let cell = grid.cell(for: _item)
@@ -1042,6 +1141,7 @@ extension Composition.Manager {
             if !programatically {
                 selected ? self.selected(cell: cell, with: item, in: section, for: _indexPath) : self.deselected(cell: cell, with: item, in: section, for: _indexPath)
             }
+
         case .horizontal(_, _, let rows, _):
             switch rows {
             case .finite:
@@ -1065,10 +1165,12 @@ extension Composition.Manager {
                     }
                 }
             }
+
         default:
             break
         }
     }
+
     func set(cell: Cell, selected: Bool, completion: (() -> Void)? = nil) {
         cell.selected = selected
         cell.set(selected: selected, animated: true)
@@ -1077,25 +1179,32 @@ extension Composition.Manager {
 }
 
 extension Composition.Manager {
+
     final func grid(for section: Int) -> Cell.Wrapper<Section, Item>? {
         return (view.cellForRow(at: IndexPath(item: 0, section: section)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>
     }
+
     final func cell(for indexPath: IndexPath) -> Cell? {
         return (view.cellForRow(at: indexPath) as? Cell.Listed)?.wrapped
     }
+
     final func wrapped(for cell: UITableViewCell) -> Cell? {
         return (cell as? Cell.Listed)?.wrapped
     }
+
     final func set(selected: Bool, indexPath: IndexPath, animated: Bool = false) {
         selected ? view.selectRow(at: indexPath, animated: false, scrollPosition: .none) : view.deselectRow(at: indexPath, animated: false)
     }
+
     final func scroll(to indexPath: IndexPath, at position: UITableView.ScrollPosition, animated: Bool) {
         view.scrollToRow(at: indexPath, at: position, animated: animated)
     }
 }
 
 public class Composition {
+
     public struct Scrolling {
+
         public let vBounce          : Bool
         public let vScroll          : Bool
         public let hBounce          : Bool
@@ -1108,7 +1217,9 @@ public class Composition {
             self.hScroll = hScroll
         }
     }
+
     public enum ScrollPosition {
+
         case top
         case middle
         case bottom

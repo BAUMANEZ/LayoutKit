@@ -12,6 +12,7 @@ import OrderedCollections
 extension Composition {
 
     public final class Behaviour<Section: Hashable, Item: Hashable> {
+
         weak var manager: Manager<Section, Item>?
         var provider: Provider?
         
@@ -33,7 +34,9 @@ extension Composition {
 }
 
 extension Composition.Behaviour {
+
     public class Provider {
+
         public typealias Multiselection = (Section) -> Bool
         public typealias Persistance = (Item, Section) -> Bool
         

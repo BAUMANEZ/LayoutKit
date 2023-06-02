@@ -58,12 +58,14 @@ extension Grid {
                 view.showsHorizontalScrollIndicator = false
                 view.isScrollEnabled = false
                 (view.collectionViewLayout as? UICollectionViewFlowLayout)?.scrollDirection = .vertical
+
             case .horizontal(_, _, let rows, _):
                 switch rows {
                 case .infinite(let scrolling), .finite(_, let scrolling):
                     switch scrolling {
                     case .centerted:
                         view.decelerationRate = .fast
+
                     default:
                         break
                     }
@@ -104,16 +106,19 @@ extension Grid {
                             break
                         }
                         view.setContentOffset(offset, animated: false)
+
                     case .centerted:
                         let page = parent.source.page(in: section) ?? 0
                         infiniteScroll(item: page, count: parent.source.items(for: section).count, animated: false)
                     }
                     break
+
                 case .finite(_, let scrolling):
                     switch scrolling {
                     case .automatic:
                         guard let offset = parent.source.offset(in: section) else { break }
                         view.setContentOffset(offset, animated: false)
+
                     case .centerted:
                         guard let page = parent.source.page(in: section) else { break }
                         scroll(to: page, at: .centeredHorizontally, animated: false)
@@ -148,9 +153,11 @@ extension Grid {
                 switch rows {
                 case .finite:
                     return parent.source.items(for: section).count
+
                 case .infinite:
                     return multiplier*parent.source.items(for: section).count
                 }
+
             default:
                 return parent.source.items(for: section).count
             }
@@ -360,18 +367,21 @@ extension Grid {
             switch style {
             case .vertical, .grid, .custom:
                 view.isScrollEnabled = true
+
             case .horizontal(_, _, let rows, _):
                 switch rows {
                 case .finite(_, let scrolling), .infinite(let scrolling):
                     switch scrolling {
                     case .automatic:
                         view.isScrollEnabled = true
+
                     case .centerted:
                         view.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
                         view.isScrollEnabled = false
                     }
                 }
             }
+
             parent.focused(cell: cell, with: item, in: section, for: indexPath, with: FocusUpdateContext(grided: context, actual: _section), using: coordinator)
         }
         final func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -381,6 +391,7 @@ extension Grid {
             switch parent.layout.style(for: section) {
             case .grid:
                 parent.source.save(offset: scrollView.contentOffset, in: section)
+
             case .horizontal(_, _, let rows, _):
                 switch rows {
                 case .finite(_, let scrolling), .infinite(let scrolling):
@@ -392,10 +403,12 @@ extension Grid {
                         ) {
                             parent.source.save(page: center.item%mod, in: section)
                         }
+
                     case .automatic:
                         break
                     }
                 }
+
             default:
                 break
             }
@@ -521,10 +534,12 @@ extension Grid.Manager {
         switch style {
         case .grid:
             view.scrollToItem(at: IndexPath(item: item, section: 0), at: position, animated: animated)
+
         case .horizontal(_, _, let rows, _):
             switch rows {
             case .finite:
                 view.scrollToItem(at: IndexPath(item: item, section: 0), at: position, animated: animated)
+
             case .infinite:
                 infiniteScroll(item: item, count: parent.source.items(for: section).count, animated: animated)
             }
