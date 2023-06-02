@@ -10,60 +10,68 @@ import OrderedCollections
 
 //MARK: - Source
 extension Composition {
+
     public final class Source<Section: Hashable, Item: Hashable> {
+
         public fileprivate(set) var pages   : [Section: Int] = [:]
         public fileprivate(set) var offsets : [Section: CGPoint] = [:]
         public fileprivate(set) var selected: Set<Item> = []
                 
         public lazy var snapshot = Snapshot(source: self)
-        internal weak var manager: Manager<Section, Item>?
-        internal var provider: Provider?
+        weak var manager: Manager<Section, Item>?
+        var provider: Provider?
         
-        internal init(manager: Manager<Section, Item>? = nil) {
+        init(manager: Manager<Section, Item>? = nil) {
             self.manager = manager
         }
         
         //MARK: Data Source
-        internal func set(item: Item, selected: Bool) {
+        func set(item: Item, selected: Bool) {
             if selected {
                 self.selected.insert(item)
             } else {
                 self.selected.remove(item)
             }
         }
-        internal func selectAll() {
+
+        func selectAll() {
             sections.forEach { section in
                 items(for: section).forEach { item in
                     self.selected.insert(item)
                 }
             }
         }
-        internal func deselectAll() {
+
+        func deselectAll() {
             self.selected.removeAll()
         }
-        internal func selected(indexPath: IndexPath) -> Bool {
+
+        func selected(indexPath: IndexPath) -> Bool {
             guard let item = item(for: indexPath) else { return false }
             return selected(item: item)
         }
+
         public func selected(item: Item) -> Bool {
             return selected.contains(item)
         }
         
-        internal func save(offset: CGPoint, in section: Section) {
+        func save(offset: CGPoint, in section: Section) {
             offsets[section] = offset
         }
+
         public func offset(in section: Section) -> CGPoint? {
             return offsets[section]
         }
         
-        internal func save(page: Int, in section: Section) {
+        func save(page: Int, in section: Section) {
             pages[section] = page
         }
+
         public func page(in section: Section) -> Int? {
             return pages[section]
         }
         
-        internal func separatable(for indexPath: IndexPath) -> Bool {
+        func separatable(for indexPath: IndexPath) -> Bool {
             guard let section = self.section(for: indexPath.section) else { return false }
             let items = items(for: section)
             guard items.indices.contains(indexPath.item) else { return false }
@@ -74,25 +82,31 @@ extension Composition {
         public var sections: OrderedSet<Section> {
             return snapshot.sections
         }
+
         public func section(for index: Int) -> Section? {
             let sections = sections
             return sections.indices.contains(index) ? sections[index] : nil
         }
+
         public func section(for item: Item) -> Section? {
             return snapshot.items.first(where: { $0.value.contains(item) })?.key
         }
+
         public func index(for section: Section) -> Int? {
             return sections.firstIndex(of: section)
         }
+
         public func items(for section: Section) -> OrderedSet<Item> {
             return snapshot.items[section] ?? []
         }
+
         public func item(for indexPath: IndexPath) -> Item? {
             guard let section = section(for: indexPath.section),
                   let rows = snapshot.items[section], rows.indices.contains(indexPath.item)
             else { return nil }
             return rows[indexPath.item]
         }
+
         public func indexPath(for item: Item) -> IndexPath? {
             guard let pair = snapshot.items.first(where: { $1.contains(item) }),
                   let _section = snapshot.sections.firstIndex(of: pair.key),
@@ -104,6 +118,7 @@ extension Composition {
         public func contains(section: Section) -> Bool {
             sections.contains(section)
         }
+
         public func contains(item: Item) -> Bool {
             return snapshot.items.first(where: { $1.contains(item) }) != nil
         }
@@ -115,11 +130,13 @@ extension Composition {
             else { return  nil }
             return cell
         }
+
         public func header(for section: Int) -> Boundary? {
             let index = section
             guard let section = self.section(for: index) else { return nil }
             return provider?.header?(index, section)
         }
+
         public func footer(for section: Int) -> Boundary? {
             let index = section
             guard let section = self.section(for: index) else { return nil }
@@ -129,6 +146,7 @@ extension Composition {
 }
 
 extension Composition.Source {
+
     public class Provider {
         public typealias Cell   = (_ indexPath: IndexPath, _ item: Item, _ section: Section) -> Compositional?
         public typealias Header = (_ index: Int, _ section: Section) -> Boundary?
@@ -147,14 +165,16 @@ extension Composition.Source {
 }
 
 extension Composition.Source {
+
     public final class Snapshot {
+
         private typealias Pair = (index: Int, section: Section)
         
         fileprivate weak var source: Composition.Source<Section, Item>?
         fileprivate var sections: OrderedSet<Section> = []
         fileprivate var items: [Section: OrderedSet<Item>] = [:]
         
-        internal private(set) var updating = false
+        private(set) var updating = false
         
         fileprivate init(source: Composition.Source<Section, Item>) {
             self.source = source
@@ -178,53 +198,69 @@ extension Composition.Source {
                         dSections = delete
                         iSections = insert
                     }
+
                 case .appendSections(let sections, let items):
                     self.append(sections: sections, items: items) { insert in
                         iSections = insert
                     }
+
                 case .addSections(let sections, let index, let items):
                     self.add(sections: sections, to: index, items: items) { insert in
                         iSections = insert
                     }
+
                 case .deleteSections(let sections):
                     self.delete(sections: sections) { delete in
                         dSections = delete
                     }
+
                 case .reloadSections(let sections):
                     self.reload(sections: sections) { reload in
                         rSections = reload
                     }
+
                 case .setItems(let items, let section):
                     self.set(items: items, to: section) { delete, insert in
                         dItems = delete
                     }
+
                 case .appendItems(let items, let section):
                     self.add(items: items, to: section) { insert in
                         iItems = insert
                     }
+
                 case .refreshSections(let sections):
                     self.refresh(sections: sections)
                     list.beginUpdates()
                     list.endUpdates()
+
                     continue
                 }
+
                 guard let animation = animation else { list.reloadData(); continue }
+
                 list.beginUpdates()
+
                 if let dSections = dSections, !dSections.isEmpty {
                     list.deleteSections(dSections, with: animation)
                 }
+
                 if let iSections = iSections, !iSections.isEmpty {
                     list.insertSections(iSections, with: animation)
                 }
+
                 if let rSections = rSections, !rSections.isEmpty {
                     list.reloadSections(rSections, with: animation)
                 }
+
                 if !dItems.isEmpty {
                     list.deleteRows(at: Array(dItems), with: animation)
                 }
+
                 if !iItems.isEmpty {
                     list.insertRows(at: Array(iItems), with: animation)
                 }
+
                 list.endUpdates()
             }
         }
@@ -322,6 +358,7 @@ extension Composition.Source {
                 completion([], [])
             }
         }
+
         private func add(items: OrderedSet<Item>, to section: Section, completion: (Set<IndexPath>) -> Void) {
             source?.manager?.layout.remove(section: section)
             guard items.count > 0, let _section = self.sections.firstIndex(of: section) else { completion([]); return }

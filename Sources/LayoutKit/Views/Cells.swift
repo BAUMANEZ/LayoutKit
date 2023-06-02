@@ -10,7 +10,7 @@ import UIKit
 open class Cell: UIView, Compositional {
     //MARK: - Internal Properties
     /// - id: used for deque
-    internal let dequeID = UUID()
+    let dequeID = UUID()
     
     //MARK: Main properties
     /// - identifier: override this property for your custom cell. This property is used when dequeueing cell
@@ -18,10 +18,10 @@ open class Cell: UIView, Compositional {
     open class var identifier: String {
         return "defaultCell"
     }
-    internal var _identifier: String {
+    var _identifier: String {
         return Self.identifier
     }
-    internal weak var wrapper: UIView?
+    weak var wrapper: UIView?
     public let content = UIView()
     
     public internal(set) var selected: Bool = false
@@ -75,36 +75,36 @@ open class Cell: UIView, Compositional {
 }
 
 extension Cell {
-    internal class Wrapper<Section: Hashable, Item: Hashable>: Cell {
-        internal typealias Child  = Grid.Manager<Section, Item>
-        internal typealias Parent = Composition.Manager<Section, Item>
+    class Wrapper<Section: Hashable, Item: Hashable>: Cell {
+        typealias Child  = Grid.Manager<Section, Item>
+        typealias Parent = Composition.Manager<Section, Item>
         
         override class var identifier: String {
             return "wrapperCell"
         }
         
-        internal private(set) var grid: Child?
+        private(set) var grid: Child?
         
         override func prepareForReuse() {
             super.prepareForReuse()
             clear()
         }
         
-        internal func clear() {
+        func clear() {
             grid?.view.removeFromSuperview()
             grid = nil
         }
         
-        internal func configure(in section: Int, parent: Parent) {
+        func configure(in section: Int, parent: Parent) {
             self.grid = Child(parent: parent, section: section, in: content)
         }
     }
 }
 
 extension Cell {
-    internal class Listed: UITableViewCell {
-        internal private(set) var wrapped: Cell?
-        internal private(set) var separator: UIView?
+    class Listed: UITableViewCell {
+        private(set) var wrapped: Cell?
+        private(set) var separator: UIView?
         
         private var bottom = NSLayoutConstraint()
                         
@@ -138,7 +138,7 @@ extension Cell {
             fatalError("init(coder:) has not been implemented")
         }
         
-        internal func wrap(cell: Cell) {
+        func wrap(cell: Cell) {
             self.wrapped?.wrapper = nil
             self.wrapped?.removeFromSuperview()
             self.wrapped = cell
@@ -151,7 +151,7 @@ extension Cell {
             bottom = cell.bottomAnchor.constraint(equalTo: contentView.bottomAnchor);
             bottom.priority = .defaultHigh; bottom.isActive = true
         }
-        internal func insert(separator: UIView, height: CGFloat) {
+        func insert(separator: UIView, height: CGFloat) {
             guard wrapped != nil else { return }
             self.separator = separator
             separator.translatesAutoresizingMaskIntoConstraints = false
@@ -170,15 +170,15 @@ extension Cell {
 }
 
 extension Cell {
-    internal class Grided: UICollectionViewCell {
-        internal var wrapped: Cell?
+    class Grided: UICollectionViewCell {
+        var wrapped: Cell?
         
         override func prepareForReuse() {
             super.prepareForReuse()
             wrapped?.prepareForReuse()
         }
         
-        internal override init(frame: CGRect) {
+        override init(frame: CGRect) {
             super.init(frame: frame)
             clipsToBounds = false
             backgroundColor = .clear
@@ -188,7 +188,7 @@ extension Cell {
             fatalError("init(coder:) has not been implemented")
         }
         
-        internal func wrap(cell: Cell) {
+        func wrap(cell: Cell) {
             self.wrapped?.wrapper = nil
             self.wrapped?.removeFromSuperview()
             self.wrapped = cell
@@ -222,23 +222,23 @@ public extension UICollectionViewCell {
 }
 
 extension UITableView {
-    internal func register(_ cell: Cell.Type) {
+    func register(_ cell: Cell.Type) {
         register(Cell.Listed.self, forCellReuseIdentifier: cell.identifier)
     }
-    internal func register(_ wrapper: Cell.Type, template: String? = nil) {
+    func register(_ wrapper: Cell.Type, template: String? = nil) {
         if let template {
             register(Cell.Listed.self, forCellReuseIdentifier: wrapper.identifier + "_" + template)
         } else {
             register(wrapper.self)
         }
     }
-    internal func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Listed? {
+    func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Listed? {
         return dequeueReusableCell(withIdentifier: cell._identifier, for: indexPath) as? Cell.Listed
     }
-    internal func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Listed? {
+    func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Listed? {
         return dequeueReusableCell(withIdentifier: cell.identifier, for: indexPath) as? Cell.Listed
     }
-    internal func dequeue(wrapper: Cell.Type, for indexPath: IndexPath, with template: String? = nil) -> Cell.Listed? {
+    func dequeue(wrapper: Cell.Type, for indexPath: IndexPath, with template: String? = nil) -> Cell.Listed? {
         if let template {
             return dequeueReusableCell(withIdentifier: wrapper.identifier + "_" + template, for: indexPath) as? Cell.Listed
         } else {
@@ -248,19 +248,19 @@ extension UITableView {
 }
 
 extension UICollectionView {
-    internal func register(_ cell: Cell.Type) {
+    func register(_ cell: Cell.Type) {
         register(Cell.Grided.self, forCellWithReuseIdentifier: cell.identifier)
     }
-    internal func register(_ cell: Cell.Type, template: String) {
+    func register(_ cell: Cell.Type, template: String) {
         register(Cell.Grided.self, forCellWithReuseIdentifier: cell.identifier + "_" + template)
     }
-    internal func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Grided? {
+    func dequeue(cell: Cell, for indexPath: IndexPath) -> Cell.Grided? {
         return dequeueReusableCell(withReuseIdentifier: cell._identifier, for: indexPath) as? Cell.Grided
     }
-    internal func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Grided? {
+    func dequeue(cell: Cell.Type, for indexPath: IndexPath) -> Cell.Grided? {
         return dequeueReusableCell(withReuseIdentifier: cell.identifier, for: indexPath) as? Cell.Grided
     }
-    internal func dequeue(cell: Cell, template: String, for indexPath: IndexPath) -> Cell.Grided? {
+    func dequeue(cell: Cell, template: String, for indexPath: IndexPath) -> Cell.Grided? {
         return dequeueReusableCell(withReuseIdentifier: cell._identifier + "_" + template, for: indexPath) as? Cell.Grided
     }
 }

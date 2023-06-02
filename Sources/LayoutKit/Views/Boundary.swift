@@ -7,7 +7,8 @@
 
 import UIKit
 
-internal protocol BoundaryDelegate: AnyObject {
+protocol BoundaryDelegate: AnyObject {
+
     func selectable(header: Boundary, in section: Int) -> Bool
     func selectable(footer: Boundary, in section: Int) -> Bool
     func selected(header: Boundary, in section: Int)
@@ -25,7 +26,8 @@ internal protocol BoundaryDelegate: AnyObject {
 }
 
 open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
-    internal let dequeID = UUID()
+
+    let dequeID = UUID()
     
     //MARK: Main properties
     /// - identifier: override this property for your custom boundary view. This property is used when dequeueing view
@@ -33,9 +35,11 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
     open class var identifier: String {
         return String(describing: Self.self)
     }
-    internal var _identifier: String {
+
+    var _identifier: String {
         return Self.identifier
     }
+
     public var content = UIView()
     
     public internal(set) var highlighted: Bool = false
@@ -54,12 +58,15 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
         setupContent()
         setup()
     }
+
+    @available(*, unavailable)
     public required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
     //MARK: Entry point for view layout cofiguration
     open func setup() {}
+
     private func setupContent() {
         content.backgroundColor = .clear
         content.translatesAutoresizingMaskIntoConstraints = false
@@ -73,19 +80,30 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
     }
     
     open func selected() {}
+
     open func set(focused: Bool, context: UIFocusUpdateContext, coordinator: UIFocusAnimationCoordinator) {}
+
     open func set(highlighted: Bool, animated: Bool = true) {
-        UIView.animate(withDuration: animated ? 0.5 : 0, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0.25, options: [.allowUserInteraction, .curveLinear]) {
-            self.content.transform = highlighted ? CGAffineTransform(scaleX: 0.985, y: 0.985) : .identity
+        UIView.animate(
+            withDuration: animated ? 0.5 : 0,
+            delay: 0,
+            usingSpringWithDamping: 0.85,
+            initialSpringVelocity: 0.25,
+            options: [.allowUserInteraction, .curveLinear]
+        ) { [weak self] in
+            self?.content.transform = highlighted ? CGAffineTransform(scaleX: 0.985, y: 0.985) : .identity
         }
     }
 }
 
+// MARK: - Listed (Table View Section)
+
 extension Boundary {
-    internal final class Listed: UITableViewHeaderFooterView {
-        internal var wrapped: Boundary?
-        internal weak var delegate: BoundaryDelegate?
-        internal var section: Int?
+
+    final class Listed: UITableViewHeaderFooterView {
+        var wrapped: Boundary?
+        weak var delegate: BoundaryDelegate?
+        var section: Int?
         private var isHeader = true
         
         override var canBecomeFocused: Bool {
@@ -101,13 +119,13 @@ extension Boundary {
             fatalError("init(coder:) has not been implemented")
         }
         
-        internal override func prepareForReuse() {
+        override func prepareForReuse() {
             super.prepareForReuse()
             delegate = nil
             wrapped?.prepareForReuse()
         }
         
-        internal func wrap(boundary: Boundary, isHeader: Bool) {
+        func wrap(boundary: Boundary, isHeader: Bool) {
             self.isHeader = isHeader
             wrapped?.removeFromSuperview()
             wrapped = boundary
@@ -133,7 +151,7 @@ extension Boundary {
         }
         
         #if os(tvOS)
-        internal override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
             super.pressesBegan(presses, with: event)
             guard let delegate = delegate, let section = section, let wrapped = wrapped else { return }
             guard isHeader ? delegate.highlightable(header: wrapped, in: section) : delegate.highlightable(footer: wrapped, in: section) else { return }
@@ -146,7 +164,7 @@ extension Boundary {
                 break
             }
         }
-        internal override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
             super.pressesEnded(presses, with: event)
             guard let delegate = delegate,
                   let section = section,
@@ -194,13 +212,13 @@ extension Boundary {
 
 //MARK: Internally views are wrapped in tableHeaderFooterView
 extension UITableView {
-    internal func register(_ view: Boundary.Type) {
+    func register(_ view: Boundary.Type) {
         register(Boundary.Listed.self, forHeaderFooterViewReuseIdentifier: view.identifier)
     }
-    internal func dequeue(_ view: Boundary) -> Boundary.Listed? {
+    func dequeue(_ view: Boundary) -> Boundary.Listed? {
         dequeueReusableHeaderFooterView(withIdentifier: view._identifier) as? Boundary.Listed
     }
-    internal func dequeue(_ view: Boundary.Type) -> Boundary.Listed? {
+    func dequeue(_ view: Boundary.Type) -> Boundary.Listed? {
         dequeueReusableHeaderFooterView(withIdentifier: view.identifier) as? Boundary.Listed
     }
 }

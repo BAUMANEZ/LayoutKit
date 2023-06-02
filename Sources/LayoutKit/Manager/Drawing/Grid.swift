@@ -9,15 +9,15 @@ import UIKit
 import OrderedCollections
 
 extension Grid {
-    internal final class Manager<Section: Hashable, Item: Hashable>: NSObject, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, BoundaryDelegate {
-        internal typealias Parent = Composition.Manager<Section, Item>?
+    final class Manager<Section: Hashable, Item: Hashable>: NSObject, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, BoundaryDelegate {
+        typealias Parent = Composition.Manager<Section, Item>?
         
-        internal final let view: UICollectionView
-        internal final let _section: Int
-        internal final weak var parent: Parent
+        final let view: UICollectionView
+        final let _section: Int
+        final weak var parent: Parent
                 
-        internal final let multiplier = 200
-        internal final var mod: Int {
+        final let multiplier = 200
+        final var mod: Int {
             guard let parent, let section = parent.source.section(for: _section) else { return 1 }
             return max(1, parent.source.items(for: section).count)
         }
@@ -25,7 +25,7 @@ extension Grid {
         private var lastDequedCell: Cell.Grided?
                 
         //MARK: - Init
-        internal init(parent: Parent, section: Int, in content: UIView) {
+        init(parent: Parent, section: Int, in content: UIView) {
             let flow = FlowLayout<Section, Item>()
             self.view = UICollectionView(frame: content.frame, collectionViewLayout: flow)
             self.parent = parent
@@ -88,7 +88,7 @@ extension Grid {
             view.rightAnchor.constraint(equalTo: content.rightAnchor).isActive = true
             view.bottomAnchor.constraint(equalTo: content.bottomAnchor).isActive = true
         }
-        internal func restore() {
+        func restore() {
             guard let parent,
                   let section = parent.source.section(for: _section),
                   let style = parent.layout.style(for: section)
@@ -124,18 +124,18 @@ extension Grid {
             }
         }
         
-        internal final func stride(for item: Int) -> StrideTo<Int> {
+        final func stride(for item: Int) -> StrideTo<Int> {
             let mod = mod
             return Swift.stride(from: item, to: mod*multiplier, by: mod)
         }
         
         //MARK: - Data
-        internal final func numberOfSections(
+        final func numberOfSections(
             in collectionView: UICollectionView
         ) -> Int {
             return 1
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             numberOfItemsInSection section: Int
         ) -> Int {
@@ -155,7 +155,7 @@ extension Grid {
                 return parent.source.items(for: section).count
             }
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             cellForItemAt indexPath: IndexPath
         ) -> UICollectionViewCell {
@@ -174,7 +174,7 @@ extension Grid {
         }
         
         //MARK: - Layout
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             layout collectionViewLayout: UICollectionViewLayout,
             sizeForItemAt indexPath: IndexPath
@@ -185,7 +185,7 @@ extension Grid {
             else { return .zero }
             return parent.layout.size(for: item, in: section)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             layout collectionViewLayout: UICollectionViewLayout,
             insetForSectionAt section: Int
@@ -195,7 +195,7 @@ extension Grid {
             else { return .zero }
             return parent.layout.insets(for: section)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             layout collectionViewLayout: UICollectionViewLayout,
             minimumLineSpacingForSectionAt section: Int
@@ -205,7 +205,7 @@ extension Grid {
             else { return .zero }
             return parent.layout.indent(for: section)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             layout collectionViewLayout: UICollectionViewLayout,
             minimumInteritemSpacingForSectionAt section: Int
@@ -217,7 +217,7 @@ extension Grid {
         }
         
         //MARK: - Delegate
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             willDisplay cell: UICollectionViewCell,
             forItemAt indexPath: IndexPath
@@ -229,7 +229,7 @@ extension Grid {
             else { return }
             parent.will(display: cell, with: item, in: section, for: indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             didEndDisplaying cell: UICollectionViewCell,
             forItemAt indexPath: IndexPath
@@ -241,7 +241,7 @@ extension Grid {
             else { return }
             parent.end(display: cell, with: item, in: section, for: indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             shouldSelectItemAt indexPath: IndexPath
         ) -> Bool {
@@ -252,7 +252,7 @@ extension Grid {
             else { return false }
             return parent.selectable(cell: cell, with: item, in: section, for: indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             didSelectItemAt indexPath: IndexPath
         ) {
@@ -263,7 +263,7 @@ extension Grid {
             else { return }
             parent.set(item: item, in: section, selected: true, programatically: false)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             shouldDeselectItemAt indexPath: IndexPath
         ) -> Bool {
@@ -275,7 +275,7 @@ extension Grid {
             else { return false }
             return parent.deselectable(cell: cell, with: item, in: section, for: _indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             didDeselectItemAt indexPath: IndexPath
         ) {
@@ -286,7 +286,7 @@ extension Grid {
             else { return }
             parent.set(item: item, in: section, selected: false, programatically: false)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             shouldHighlightItemAt indexPath: IndexPath
         ) -> Bool {
@@ -297,7 +297,7 @@ extension Grid {
             else { return false }
             return parent.highlightable(cell: cell, with: item, in: section, for: indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             didHighlightItemAt indexPath: IndexPath
         ) {
@@ -310,7 +310,7 @@ extension Grid {
             cell.set(highlighted: true, animated: true)
             parent.highlighted(cell: cell, with: item, in: section, for: indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             didUnhighlightItemAt indexPath: IndexPath
         ) {
@@ -323,7 +323,7 @@ extension Grid {
             cell.set(highlighted: false, animated: true)
             parent.unhighlighted(cell: cell, with: item, in: section, for: indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             canFocusItemAt indexPath: IndexPath
         ) -> Bool {
@@ -334,13 +334,13 @@ extension Grid {
             else { return false }
             return parent.focusable(cell: cell, with: item, in: section, for: indexPath)
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             shouldUpdateFocusIn context: UICollectionViewFocusUpdateContext
         ) -> Bool {
             return parent?.should(update: FocusUpdateContext(grided: context, actual: _section)) == true
         }
-        internal final func collectionView(
+        final func collectionView(
             _ collectionView: UICollectionView,
             didUpdateFocusIn context: UICollectionViewFocusUpdateContext,
             with coordinator: UIFocusAnimationCoordinator
@@ -374,7 +374,7 @@ extension Grid {
             }
             parent.focused(cell: cell, with: item, in: section, for: indexPath, with: FocusUpdateContext(grided: context, actual: _section), using: coordinator)
         }
-        internal final func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        final func scrollViewDidScroll(_ scrollView: UIScrollView) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
@@ -403,85 +403,85 @@ extension Grid {
         }
         
         //MARK: - Boundary Delegate
-        internal final func selectable(header: Boundary, in section: Int) -> Bool {
+        final func selectable(header: Boundary, in section: Int) -> Bool {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return false }
             return parent.selectable(header: header, in: section, at: _section)
         }
-        internal final func selectable(footer: Boundary, in section: Int) -> Bool {
+        final func selectable(footer: Boundary, in section: Int) -> Bool {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return false }
             return parent.selectable(footer: footer, in: section, at: _section)
         }
-        internal final func selected(header: Boundary, in section: Int) {
+        final func selected(header: Boundary, in section: Int) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
             parent.selected(header: header, in: section, at: _section)
         }
-        internal final func selected(footer: Boundary, in section: Int) {
+        final func selected(footer: Boundary, in section: Int) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
             parent.selected(footer: footer, in: section, at: _section)
         }
-        internal final func highlightable(header: Boundary, in section: Int) -> Bool {
+        final func highlightable(header: Boundary, in section: Int) -> Bool {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return false }
             return parent.highlightable(header: header, in: section, at: _section)
         }
-        internal final func highlightable(footer: Boundary, in section: Int) -> Bool {
+        final func highlightable(footer: Boundary, in section: Int) -> Bool {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return false }
             return parent.highlightable(footer: footer, in: section, at: _section)
         }
-        internal final func highlighted(header: Boundary, in section: Int) {
+        final func highlighted(header: Boundary, in section: Int) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
             parent.highlighted(header: header, in: section, at: _section)
         }
-        internal final func unhighlighted(header: Boundary, in section: Int) {
+        final func unhighlighted(header: Boundary, in section: Int) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
             parent.unhighlighted(header: header, in: section, at: _section)
         }
-        internal final func highlighted(footer: Boundary, in section: Int) {
+        final func highlighted(footer: Boundary, in section: Int) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
             parent.highlighted(footer: footer, in: section, at: _section)
         }
-        internal final func unhighlighted(footer: Boundary, in section: Int) {
+        final func unhighlighted(footer: Boundary, in section: Int) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
             parent.highlighted(footer: footer, in: section, at: _section)
         }
-        internal final func focusable(header: Boundary, in section: Int) -> Bool {
+        final func focusable(header: Boundary, in section: Int) -> Bool {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return false }
             return parent.focusable(header: header, in: section, at: _section)
         }
-        internal final func focusable(footer: Boundary, in section: Int) -> Bool {
+        final func focusable(footer: Boundary, in section: Int) -> Bool {
             guard let parent,
                     let section = parent.source.section(for: _section)
             else { return false }
             return parent.focusable(footer: footer, in: section, at: _section)
         }
-        internal final func focused(header: Boundary, in section: Int) {
+        final func focused(header: Boundary, in section: Int) {
             guard let parent,
                     let section = parent.source.section(for: _section)
             else { return }
             parent.focused(header: header, in: section, at: _section)
         }
-        internal final func focused(footer: Boundary, in section: Int) {
+        final func focused(footer: Boundary, in section: Int) {
             guard let parent,
                   let section = parent.source.section(for: _section)
             else { return }
@@ -503,17 +503,17 @@ extension Grid.Manager {
     }
 }
 extension Grid.Manager {
-    internal final  func cell(for item: Int) -> Cell? {
+    final  func cell(for item: Int) -> Cell? {
         return (view.cellForItem(at: IndexPath(item: item, section: 0)) as? Cell.Grided)?.wrapped
     }
-    internal final func wrapped(for cell: UICollectionViewCell) -> Cell? {
+    final func wrapped(for cell: UICollectionViewCell) -> Cell? {
         return (cell as? Cell.Grided)?.wrapped
     }
-    internal final func set(selected: Bool, item: Int, animated: Bool = false) {
+    final func set(selected: Bool, item: Int, animated: Bool = false) {
         let indexPath = IndexPath(item: item, section: 0)
         selected ? view.selectItem(at: indexPath, animated: animated, scrollPosition: []) : view.deselectItem(at: indexPath, animated: animated)
     }
-    internal final func scroll(to item: Int, at position: UICollectionView.ScrollPosition, animated: Bool) {
+    final func scroll(to item: Int, at position: UICollectionView.ScrollPosition, animated: Bool) {
         guard let parent,
               let section = parent.source.section(for: _section),
               let style = parent.layout.style(for: section)
@@ -532,7 +532,7 @@ extension Grid.Manager {
             return
         }
     }
-    internal final func dequeue<T: Cell>(
+    final func dequeue<T: Cell>(
         cell: T.Type,
         with item: Int
     ) -> T? {
@@ -545,4 +545,4 @@ extension Grid.Manager {
     }
 }
 
-internal struct Grid {}
+struct Grid {}

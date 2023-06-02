@@ -12,12 +12,12 @@ public class FocusUpdateContext {
     public let view     : FocusedProperty<UIView>
     public let item     : FocusedProperty<UIFocusItem>
     
-    internal init(tabled: UITableViewFocusUpdateContext) {
+    init(tabled: UITableViewFocusUpdateContext) {
         self.indexPath = FocusedProperty<IndexPath>(next: tabled.nextFocusedIndexPath, previous: tabled.previouslyFocusedIndexPath)
         self.view = FocusedProperty<UIView>(next: tabled.nextFocusedView, previous: tabled.previouslyFocusedView)
         self.item = FocusedProperty<UIFocusItem>(next: tabled.nextFocusedItem, previous: tabled.previouslyFocusedItem)
     }
-    internal init(grided: UICollectionViewFocusUpdateContext, actual section: Int) {
+    init(grided: UICollectionViewFocusUpdateContext, actual section: Int) {
         let previousIndexPath: IndexPath? = {
             guard let indexPath = grided.previouslyFocusedIndexPath else { return nil }
             return IndexPath(item: indexPath.item, section: section)
@@ -37,7 +37,7 @@ extension FocusUpdateContext {
         public let next: T?
         public let previous: T?
         
-        internal init(next: T?, previous: T?) {
+        init(next: T?, previous: T?) {
             self.next = next
             self.previous = previous
         }

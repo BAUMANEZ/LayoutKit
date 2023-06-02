@@ -10,9 +10,10 @@ import OrderedCollections
 
 //MARK: - Behaviour
 extension Composition {
+
     public final class Behaviour<Section: Hashable, Item: Hashable> {
-        internal weak var manager: Manager<Section, Item>?
-        internal var provider: Provider?
+        weak var manager: Manager<Section, Item>?
+        var provider: Provider?
         
         //MARK: - Methods
         /// - multiselection: default is false
@@ -20,11 +21,12 @@ extension Composition {
         public func multiselection(section: Section) -> Bool {
             return provider?.multiselection?(section) ?? false
         }
+
         public func persistant(item: Item, in section: Section) -> Bool {
             return provider?.persistance?(item, section) ?? false
         }
         
-        internal init(manager: Manager<Section, Item>? = nil) {
+        init(manager: Manager<Section, Item>? = nil) {
             self.manager = manager
         }
     }

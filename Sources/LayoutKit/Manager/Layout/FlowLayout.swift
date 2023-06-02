@@ -7,10 +7,10 @@
 
 import UIKit
 
-internal final class FlowLayout<Section: Hashable, Item: Hashable>: UICollectionViewFlowLayout {
+final class FlowLayout<Section: Hashable, Item: Hashable>: UICollectionViewFlowLayout {
     public weak var grid: Grid.Manager<Section, Item>?
     
-    internal override func targetContentOffset(
+    override func targetContentOffset(
         forProposedContentOffset proposedContentOffset: CGPoint,
         withScrollingVelocity velocity: CGPoint
     ) -> CGPoint {

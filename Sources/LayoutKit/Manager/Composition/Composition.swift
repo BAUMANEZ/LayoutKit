@@ -64,7 +64,7 @@ extension Composition {
         public typealias Source    = Composition.Source<Section, Item>
         public typealias Behaviour = Composition.Behaviour<Section, Item>
         
-        internal let view: UITableView
+        let view: UITableView
         
         public let source   : Source
         public let layout   : Layout
@@ -565,59 +565,59 @@ extension Composition {
         }
         
         //MARK: - Boundary Delegate
-        internal final func selectable(header: Boundary, in section: Int) -> Bool {
+        final func selectable(header: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return selectable(header: header, in: _section, at: section)
         }
-        internal final func selectable(footer: Boundary, in section: Int) -> Bool {
+        final func selectable(footer: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return selectable(footer: footer, in: _section, at: section)
         }
-        internal final func selected(header: Boundary, in section: Int) {
+        final func selected(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             selected(header: header, in: _section, at: section)
         }
-        internal final func selected(footer: Boundary, in section: Int) {
+        final func selected(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             selected(footer: footer, in: _section, at: section)
         }
-        internal final func highlightable(header: Boundary, in section: Int) -> Bool {
+        final func highlightable(header: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return highlightable(header: header, in: _section, at: section)
         }
-        internal final func highlightable(footer: Boundary, in section: Int) -> Bool {
+        final func highlightable(footer: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return highlightable(footer: footer, in: _section, at: section)
         }
-        internal final func highlighted(header: Boundary, in section: Int) {
+        final func highlighted(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             highlighted(header: header, in: _section, at: section)
         }
-        internal final func unhighlighted(header: Boundary, in section: Int) {
+        final func unhighlighted(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             unhighlighted(header: header, in: _section, at: section)
         }
-        internal final func highlighted(footer: Boundary, in section: Int) {
+        final func highlighted(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             highlighted(footer: footer, in: _section, at: section)
         }
-        internal final func unhighlighted(footer: Boundary, in section: Int) {
+        final func unhighlighted(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             highlighted(footer: footer, in: _section, at: section)
         }
-        internal final func focusable(header: Boundary, in section: Int) -> Bool {
+        final func focusable(header: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return focusable(header: header, in: _section, at: section)
         }
-        internal final func focusable(footer: Boundary, in section: Int) -> Bool {
+        final func focusable(footer: Boundary, in section: Int) -> Bool {
             guard let _section = source.section(for: section) else { return false }
             return focusable(footer: footer, in: _section, at: section)
         }
-        internal final func focused(header: Boundary, in section: Int) {
+        final func focused(header: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             focused(header: header, in: _section, at: section)
         }
-        internal final func focused(footer: Boundary, in section: Int) {
+        final func focused(footer: Boundary, in section: Int) {
             guard let _section = source.section(for: section) else { return }
             focused(footer: footer, in: _section, at: section)
         }
@@ -976,7 +976,7 @@ extension Composition.Manager {
     public final func deselectAll(animated: Bool = true) {
         source.selected.forEach { deselect(item: $0, animated: true) }
     }
-    internal func set(
+    func set(
         item: Item,
         in section: Section,
         selected: Bool,
@@ -1057,7 +1057,7 @@ extension Composition.Manager {
             break
         }
     }
-    internal func set(cell: Cell, selected: Bool, completion: (() -> Void)? = nil) {
+    func set(cell: Cell, selected: Bool, completion: (() -> Void)? = nil) {
         cell.selected = selected
         cell.set(selected: selected, animated: true)
         completion?()
@@ -1065,19 +1065,19 @@ extension Composition.Manager {
 }
 
 extension Composition.Manager {
-    internal final func grid(for section: Int) -> Cell.Wrapper<Section, Item>? {
+    final func grid(for section: Int) -> Cell.Wrapper<Section, Item>? {
         return (view.cellForRow(at: IndexPath(item: 0, section: section)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>
     }
-    internal final func cell(for indexPath: IndexPath) -> Cell? {
+    final func cell(for indexPath: IndexPath) -> Cell? {
         return (view.cellForRow(at: indexPath) as? Cell.Listed)?.wrapped
     }
-    internal final func wrapped(for cell: UITableViewCell) -> Cell? {
+    final func wrapped(for cell: UITableViewCell) -> Cell? {
         return (cell as? Cell.Listed)?.wrapped
     }
-    internal final func set(selected: Bool, indexPath: IndexPath, animated: Bool = false) {
+    final func set(selected: Bool, indexPath: IndexPath, animated: Bool = false) {
         selected ? view.selectRow(at: indexPath, animated: false, scrollPosition: .none) : view.deselectRow(at: indexPath, animated: false)
     }
-    internal final func scroll(to indexPath: IndexPath, at position: UITableView.ScrollPosition, animated: Bool) {
+    final func scroll(to indexPath: IndexPath, at position: UITableView.ScrollPosition, animated: Bool) {
         view.scrollToRow(at: indexPath, at: position, animated: animated)
     }
 }
