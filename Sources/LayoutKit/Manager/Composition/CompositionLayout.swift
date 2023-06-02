@@ -10,6 +10,7 @@ import OrderedCollections
 
 //MARK: Layout
 extension Composition {
+
     public final class Layout<Section: Hashable, Item: Hashable> {
         private typealias Cache = Configuration.Cache<Section, Item>
         
@@ -29,12 +30,14 @@ extension Composition {
             switch provider?.header?(section, frame) {
             case .absolute(let height):
                 return height
+
             case .automatic:
                 let key = Cache.Section.Fields.Key(width: frame.width, count: manager?.source.items(for: section).count ?? 0)
                 guard let cached = cache.header(for: key, in: section) else {
                     return UITableView.automaticDimension
                 }
                 return cached
+
             default:
                 return .zero
             }
@@ -44,12 +47,14 @@ extension Composition {
             switch provider?.footer?(section, frame) {
             case .absolute(let height):
                 return height
+
             case .automatic:
                 let key = Cache.Section.Fields.Key(width: frame.width, count: manager?.source.items(for: section).count ?? 0)
                 guard let cached = cache.footer(for: key, in: section) else {
                     return UITableView.automaticDimension
                 }
                 return cached
+
             default:
                 return .zero
             }
@@ -71,12 +76,14 @@ extension Composition {
                             let inset = insets.top + insets.bottom
                             guard let max = heights.max() else { return inset }
                             return inset + max
+
                         case 2...:
                             let inset     = insets.top + insets.bottom
                             let partition = heights.partition(into: rows)
                             let columns   = partition.map{ part in part.reduce(into: spacing*CGFloat(rows-1)){ $0 += $1 } }
                             guard let max = columns.max() else { return inset }
                             return inset + max
+
                         default:
                             return insets.top + insets.bottom
                         }
@@ -168,6 +175,7 @@ extension Composition {
                 return .zero
             }
         }
+
         public func style(for section: Section) -> Style? {
             guard let cached = cache.style(for: section) else {
                 guard let style = provider?.style?(section, frame) else { return nil }
@@ -196,6 +204,7 @@ extension Composition {
                 return .zero
             }
         }
+
         public func size(for item: Item, in section: Section) -> CGSize {
             switch style(for: section) {
             case .horizontal(_, _, _, let size):
@@ -293,12 +302,14 @@ extension Composition {
 extension Composition.Layout {
 
     public enum Dimension {
+
         case automatic
         case absolute(CGFloat)
         case zero
     }
 
     public enum Style {
+
         case grid      (insets: UIEdgeInsets, mode: Mode, size: (Item) -> CGSize?)
         case custom    (height: CGFloat)
         case vertical  (height: (Item) -> Dimension?, separator: Separator?)
@@ -320,8 +331,10 @@ extension Composition.Layout {
                     switch dimension {
                     case .absolute(let indent):
                         return indent
+
                     case .zero:
                         return .zero
+
                     default:
                         return nil
                     }
@@ -337,6 +350,7 @@ extension Composition.Layout {
                 switch self {
                 case .finite(let rows, _):
                     return rows
+
                 case .infinite:
                     return 1
                 }
@@ -363,8 +377,10 @@ extension Composition.Layout {
                 switch self {
                 case .spacer(let space, _):
                     return space
+
                 case .line(_, let thickness, let insets, _):
                     return thickness+insets.top+insets.bottom
+
                 case .custom(_, let thickness, let insets, _):
                     return thickness+insets.top+insets.bottom
                 }
@@ -379,10 +395,12 @@ extension Composition.Layout {
                     view = UIView()
                     height = space
                     insets = .zero
+
                 case .line(let color, let thickness, let _insets, _):
                     view = UIView(); view.backgroundColor = color
                     height = thickness
                     insets = _insets
+
                 case .custom(let _view, let thickness, let _insets, _):
                     view = _view
                     height = thickness
@@ -403,6 +421,7 @@ extension Composition.Layout {
     }
 
     public class Provider {
+
         public typealias Style  = (_ section: Section, _ frame: CGSize) -> Composition.Layout<Section, Item>.Style?
         public typealias Header = (_ section: Section, _ frame: CGSize) -> Dimension?
         public typealias Footer = (_ section: Section, _ frame: CGSize) -> Dimension?
@@ -411,9 +430,11 @@ extension Composition.Layout {
         public var header: Header?
         public var footer: Footer?
         
-        public init(style : Style? = nil,
-                    header: Header? = nil,
-                    footer: Footer? = nil) {
+        public init(
+            style : Style? = nil,
+            header: Header? = nil,
+            footer: Footer? = nil
+        ) {
             self.style = style
             self.header = header
             self.footer = footer
@@ -422,6 +443,7 @@ extension Composition.Layout {
 }
 
 extension Array {
+
     func partition(into size: Int) -> [[Element]] {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0 ..< Swift.min($0 + size, count)])

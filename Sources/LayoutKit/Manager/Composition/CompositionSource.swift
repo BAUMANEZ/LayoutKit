@@ -348,6 +348,7 @@ extension Composition.Source {
                     Set(delete.map{ IndexPath(item: $0, section: _section) }),
                     Set(insert.map{ IndexPath(item: $0, section: _section) })
                 )
+
             default:
                 if let grid = ((source.manager?.view.cellForRow(at: IndexPath(item: 0, section: _section)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view {
                     grid.performBatchUpdates {
@@ -369,6 +370,7 @@ extension Composition.Source {
             switch source?.manager?.layout.style(for: section) {
             case .vertical:
                 completion(Set(items.indices.map{ IndexPath(item: _items+$0, section: _section) }))
+
             default:
                 if let grid = ((source?.manager?.view.cellForRow(at: IndexPath(item: 0, section: _section)) as? Cell.Listed)?.wrapped as? Cell.Wrapper<Section, Item>)?.grid?.view {
                     grid.performBatchUpdates {
