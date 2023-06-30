@@ -127,6 +127,7 @@ extension Grid {
             default:
                 break
             }
+            parent.source.manager?.restored(section: section)
         }
         
         final func stride(for item: Int) -> StrideTo<Int> {
@@ -413,6 +414,12 @@ extension Grid {
                 break
             }
             parent.scrolled(section: section, with: scrollView.contentOffset)
+        }
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+            guard let parent,
+                  let section = parent.source.section(for: _section)
+            else { return }
+            parent.stopScroll(section: section, with: scrollView.contentOffset)
         }
         
         //MARK: - Boundary Delegate

@@ -174,7 +174,11 @@ extension Composition.Source {
         fileprivate var sections: OrderedSet<Section> = []
         fileprivate var items: [Section: OrderedSet<Item>] = [:]
         
-        private(set) var updating = false
+        private(set) var updating = false {
+            didSet {
+                source?.manager?.list(updating: updating)
+            }
+        }
         
         fileprivate init(source: Composition.Source<Section, Item>) {
             self.source = source

@@ -55,7 +55,7 @@ public protocol CompositionDelegate: AnyObject {
     func willStopScroll(with velocity: CGPoint, target offset: UnsafeMutablePointer<CGPoint>)
     func endScroll(decelerating: Bool)
     func willDecelerate()
-    func stop()
+    func stopScroll(section: Section?, with offset: CGPoint)
 }
 
 extension Composition {
@@ -612,7 +612,7 @@ extension Composition {
         }
 
         public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-            stop()
+            stopScroll(section: nil, with: scrollView.contentOffset)
         }
         
         //MARK: - Boundary Delegate
@@ -761,7 +761,10 @@ extension Composition {
         open func willStopScroll(with velocity: CGPoint, target offset: UnsafeMutablePointer<CGPoint>) {}
         open func endScroll(decelerating: Bool) {}
         open func willDecelerate() {}
-        open func stop() {}
+        open func stopScroll(section: Section?, with offset: CGPoint) {}
+        
+        open func list(updating: Bool) {}
+        open func restored(section: Section) {}
         
         //MARK: - Managing DataSource
         /// - layout provider: define how to compose your sections and layout items
