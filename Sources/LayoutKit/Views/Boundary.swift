@@ -47,7 +47,7 @@ open class Boundary: UIView, Dequeueable, Highlightable, Focusable {
     
     //MARK: Preconfiguration
     /// - insets: define your custom content's insets
-    public var insets: UIEdgeInsets {
+    open var insets: UIEdgeInsets {
         return .zero
     }
     
